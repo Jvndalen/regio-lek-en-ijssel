@@ -3,7 +3,11 @@ import react from "@astrojs/react";
 import { auditLogPlugin } from "@emdash-cms/plugin-audit-log";
 import { defineConfig, fontProviders } from "astro/config";
 import emdash, { local } from "emdash/astro";
-import { sqlite } from "emdash/db";
+import { sqlite, postgres } from "emdash/db";
+
+const database = process.env.DATABASE_URL
+  ? postgres({ connectionString: process.env.DATABASE_URL })
+  : sqlite({ url: "file:./data.db" });
 
 export default defineConfig({
 	output: "server",
@@ -17,7 +21,7 @@ export default defineConfig({
 	integrations: [
 		react(),
 		emdash({
-			database: sqlite({ url: "file:./data.db" }),
+			database: database,
 			storage: local({
 				directory: "./uploads",
 				baseUrl: "/_emdash/api/media/file",
