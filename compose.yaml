@@ -1,0 +1,11 @@
+services:
+  emdash:
+    build: .
+    ports:
+      - "4321:4321"
+    volumes:
+      - emdash-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  emdash-data:
