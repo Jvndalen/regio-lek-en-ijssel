@@ -1,7 +1,7 @@
 import node from "@astrojs/node";
 import react from "@astrojs/react";
 import { auditLogPlugin } from "@emdash-cms/plugin-audit-log";
-import { defineConfig, fontProviders } from "astro/config";
+import { defineConfig, fontProviders, memoryCache } from "astro/config";
 import emdash, { local } from "emdash/astro";
 import { sqlite, postgres } from "emdash/db";
 
@@ -46,5 +46,10 @@ export default defineConfig({
 			fallbacks: ["monospace"],
 		},
 	],
-	devToolbar: { enabled: false },
+  devToolbar: { enabled: false },
+  experimental: {
+      cache: {
+        provider: memoryCache(),
+      },
+    },
 });
