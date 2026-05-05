@@ -22,7 +22,8 @@ export default defineConfig({
 				directory: "./uploads",
 				baseUrl: "/_emdash/api/media/file",
 			}),
-			plugins: [auditLogPlugin()],
+      plugins: [auditLogPlugin()],
+      siteUrl: process.env.BASE_URL
 		}),
 	],
 	fonts: [
