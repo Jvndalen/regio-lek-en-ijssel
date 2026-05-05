@@ -7,7 +7,7 @@ import { sqlite, postgres } from "emdash/db";
 
 const database = process.env.DATABASE_URL
   ? postgres({ connectionString: process.env.DATABASE_URL })
-  : sqlite({ url: "file:./data.db" });
+  : sqlite({ url: "file:./data/data.db" });
 
 export default defineConfig({
 	output: "server",

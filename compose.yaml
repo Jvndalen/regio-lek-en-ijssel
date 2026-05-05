@@ -5,4 +5,5 @@ services:
       - "4321:4321"
     volumes:
       - /data/emdash:/app/data
+      - /data/emdash-uploads:/app/uploads
     restart: unless-stopped
