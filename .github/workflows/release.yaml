@@ -46,8 +46,8 @@ jobs:
           tags: ghcr.io/${{ env.REPO_LC }}:latest
           labels: ${{ steps.meta.outputs.labels }}
       - name: Deploy to Coolify
-        uses: ChristopheCVB/coolify-deploy-action@v3.1.0
-        with:
-          token: ${{ secrets.TOKEN }}
-          domain: 'www.15042024.xyz'
-          uuid: 'b4gl04duw005uwyjvcyb8r3i'
+        run: |
+          curl --request POST "${{ secrets.COOLIFY_WEBHOOK }}" \
+            --header "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
+            --header "Content-Type: application/json" \
+            --header "Accept: application/json" \
