@@ -4,20 +4,15 @@ import {
 	getTermsForEntries,
 	getSiteSettings,
 } from "emdash";
-import { Image } from "emdash/ui";
 import Base from "../layouts/Base.astro";
 import PostCard from "../components/PostCard.astro";
 import { getReadingTime } from "../utils/reading-time";
 import { resolveBlogSiteIdentity } from "../utils/site-identity";
 
-// Limit to what we render (1 featured + 6 grid). The DB does the slicing
-// instead of fetching every post and discarding the tail in JS.
-const POSTS_PER_PAGE = 7;
-
 const [{ entries: posts, cacheHint }, settings] = await Promise.all([
 	getEmDashCollection("posts", {
 		orderBy: { published_at: "desc" },
-		limit: POSTS_PER_PAGE + 1, // +1 to detect "view all" need
+		limit: 3,
 	}),
 	getSiteSettings(),
 ]);
@@ -25,438 +20,984 @@ const { siteTitle, siteTagline } = resolveBlogSiteIdentity(settings);
 
 Astro.cache.set(cacheHint);
 
-// Trim the lookahead post used to detect overflow
-const visiblePosts = posts.slice(0, POSTS_PER_PAGE);
-const hasMorePosts = posts.length > POSTS_PER_PAGE;
+const tagsByEntry = await getTermsForEntries(
+	"posts",
+	posts.map((p) => p.data.id),
+	"tag"
+);
 
-// Find the first post with a featured image for the hero
-const featuredPost = visiblePosts.find((p) => p.data.featured_image);
-const featuredIndex = featuredPost ? visiblePosts.indexOf(featuredPost) : -1;
-
-// Get remaining posts (exclude featured if found, limit to 6 for grid)
-const gridPosts = visiblePosts.filter((_, i) => i !== featuredIndex).slice(0, 6);
-
-// Single batched query for tags across the featured post + grid posts.
-// Avoids the N+1 pattern of calling getEntryTerms() per entry.
-// Bylines are already hydrated on entry.data.bylines by getEmDashCollection.
-const tagEntryIds = [
-	...(featuredPost ? [featuredPost.data.id] : []),
-	...gridPosts.map((p) => p.data.id),
-];
-const tagsByEntry = await getTermsForEntries("posts", tagEntryIds, "tag");
-
-const featuredTags = featuredPost
-	? (tagsByEntry.get(featuredPost.data.id) ?? []).map((t) => ({
-			slug: t.slug,
-			label: t.label,
-		}))
-	: [];
-const featuredBylines = featuredPost?.data.bylines ?? [];
-
-const gridPostsWithTags = gridPosts.map((post) => ({
+const postsWithTags = posts.map((post) => ({
 	post,
 	tags: (tagsByEntry.get(post.data.id) ?? []).map((t) => ({
 		slug: t.slug,
 		label: t.label,
 	})),
-	bylines: post.data.bylines ?? [],
 }));
-
-// Format date helper
-function formatDate(date: Date | null | undefined) {
-	if (!date) return null;
-	return date.toLocaleDateString("nl-NL", {
-		year: "numeric",
-		month: "long",
-		day: "numeric",
-	});
-}
 ---
 
 <Base title={siteTitle} description={siteTagline}>
-	{
-		posts.length === 0 ? (
-			<section class="empty-state">
-				<h2>No posts yet</h2>
-				<p>Create your first post in the admin panel.</p>
-				<a href="/_emdash/admin/content/posts/new" class="btn">
-					Create a post
+	<!-- ── Hero blob ─────────────────────────────────────────────── -->
+	<section class="hero">
+		<div class="hero-blobs" aria-hidden="true">
+			<svg viewBox="0 0 1440 760" preserveAspectRatio="none">
+				<path d="M0,0 L1440,0 L1440,540 C1180,680 920,520 680,620 C420,720 200,540 0,640 Z"
+					  fill="#A8D58A"/>
+				<path d="M0,0 L1440,0 L1440,460 C1160,600 900,460 660,560 C400,660 200,500 0,580 Z"
+					  fill="#5BAE3A"/>
+			</svg>
+		</div>
+		<div class="hero-dot hero-dot--w" style="top:8%;right:-3%;width:220px;height:220px;" aria-hidden="true"></div>
+		<div class="hero-dot hero-dot--n" style="top:40%;right:-2%;width:60px;height:60px;" aria-hidden="true"></div>
+		<div class="hero-dot hero-dot--b" style="top:62%;right:-4%;width:140px;height:140px;" aria-hidden="true"></div>
+		<div class="hero-dot hero-dot--w" style="top:24%;left:4%;width:36px;height:36px;opacity:.35" aria-hidden="true"></div>
+		<div class="hero-inner">
+			<span class="hero-eyebrow">
+				<span class="pulse" aria-hidden="true"></span>
+				Welkom in de regio
+			</span>
+			<h1>Tussen <em>Lek</em> en <em>IJssel</em>.<br/>Land en water, samen scouten.</h1>
+			<p class="hero-sub">
+				Scouting Regio Lek- en IJsselstreek bestaat uit 16 groepen — acht op het land,
+				acht op het water. Hier vind je activiteiten, trainingen en alles wat er speelt.
+			</p>
+			<div class="hero-cta">
+				<a href="/posts" class="btn btn-light">Lees het nieuws</a>
+				<a href="#nieuws" class="btn btn-ghost">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true">
+						<rect x="3" y="5" width="18" height="16" rx="2"/>
+						<path d="M3 9h18M8 3v4M16 3v4"/>
+					</svg>
+					Laatste nieuws
 				</a>
-			</section>
-		) : (
-			<div class="home-content">
-				{/* Featured Post - Side by side */}
-				{featuredPost && (
-					<section class="featured-section">
-						<div class="featured-grid">
-							<a href={`/posts/${featuredPost.id}`} class="featured-image-link">
-								<div class="featured-image">
-									<Image image={featuredPost.data.featured_image} />
-								</div>
-							</a>
-							<div class="featured-content">
-								<div class="featured-meta">
-									{featuredBylines.length > 0 && (
-										<>
-											<div class="featured-bylines">
-												{featuredBylines.slice(0, 2).map((credit, index) => (
-													<>
-														{index > 0 && <span class="byline-sep">,</span>}
-														<span class="featured-byline">
-															{credit.byline.avatarMediaId && (
-																<img
-																	src={`/_emdash/api/media/file/${credit.byline.avatarMediaId}`}
-																	alt={credit.byline.displayName}
-																	class="featured-byline-avatar"
-																/>
-															)}
-															<span class="featured-byline-name">
-																{credit.byline.displayName}
-															</span>
-														</span>
-													</>
-												))}
-												{featuredBylines.length > 2 && (
-													<span class="byline-more">
-														+{featuredBylines.length - 2}
-													</span>
-												)}
-											</div>
-											<span class="meta-dot" />
-										</>
-									)}
-									{formatDate(featuredPost.data.publishedAt) && (
-										<time>{formatDate(featuredPost.data.publishedAt)}</time>
-									)}
-									<span class="meta-dot" />
-									<span>
-										{getReadingTime(featuredPost.data.content)} min read
-									</span>
-								</div>
-								<a
-									href={`/posts/${featuredPost.id}`}
-									class="featured-title-link"
-								>
-									<h1 class="featured-title">{featuredPost.data.title}</h1>
-								</a>
-								{featuredPost.data.excerpt && (
-									<p class="featured-excerpt">{featuredPost.data.excerpt}</p>
-								)}
-								{featuredTags.length > 0 && (
-									<div class="featured-tags">
-										{featuredTags.map((tag) => (
-											<a href={`/tag/${tag.slug}`} class="featured-tag">
-												{tag.label}
-											</a>
-										))}
-									</div>
-								)}
-							</div>
-						</div>
-					</section>
-				)}
-
-				{/* Latest Posts */}
-				{gridPostsWithTags.length > 0 && (
-					<section class="posts-section">
-						<header class="section-header">
-							<h2 class="section-title">Latest</h2>
-							{hasMorePosts && (
-								<a href="/posts" class="section-link">
-									View all
-								</a>
-							)}
-						</header>
-						<div class="posts-grid">
-							{gridPostsWithTags.map(({ post, tags, bylines }) => (
-								<PostCard
-									title={post.data.title ?? "Untitled"}
-									excerpt={post.data.excerpt}
-									featuredImage={post.data.featured_image}
-									href={`/posts/${post.id}`}
-									date={post.data.publishedAt ?? undefined}
-									readingTime={getReadingTime(post.data.content)}
-									tags={tags}
-									bylines={bylines}
-								/>
-							))}
-						</div>
-					</section>
-				)}
 			</div>
-		)
-	}
+		</div>
+	</section>
+
+	<!-- ── Quick tiles ───────────────────────────────────────────── -->
+	<div class="quick-tiles">
+		<a class="quick-tile quick-tile--featured" href="/posts">
+			<span class="qt-badge">Nieuw</span>
+			<span class="qt-arrow" aria-hidden="true">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M7 17L17 7M7 7h10v10"/></svg>
+			</span>
+			<div class="qt-icon">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>
+			</div>
+			<h3>Activiteiten</h3>
+			<p class="qt-meta">Hemelvaartsontmoeting, regiospelen, kampweekenden — alles in de agenda.</p>
+		</a>
+		<a class="quick-tile" href="/posts" style="--qt-accent:#28B0E6">
+			<span class="qt-arrow" aria-hidden="true">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M7 17L17 7M7 7h10v10"/></svg>
+			</span>
+			<div class="qt-icon">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg>
+			</div>
+			<h3>Vacatures</h3>
+			<p class="qt-meta">Bestuur, trainers, regiokamp — op zoek naar de leukste plek voor jouw inzet.</p>
+		</a>
+		<a class="quick-tile" href="/posts" style="--qt-accent:#1F3D7A">
+			<span class="qt-arrow" aria-hidden="true">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M7 17L17 7M7 7h10v10"/></svg>
+			</span>
+			<div class="qt-icon">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5L2 9z"/><path d="M6 11v5c2 2 10 2 12 0v-5M22 9v5"/></svg>
+			</div>
+			<h3>Trainingen</h3>
+			<p class="qt-meta">Scouting Academy: van basistraining tot teamleiderschap. Nieuwe ronde voorjaar.</p>
+		</a>
+		<a class="quick-tile" href="/posts" style="--qt-accent:#5BAE3A">
+			<span class="qt-arrow" aria-hidden="true">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M7 17L17 7M7 7h10v10"/></svg>
+			</span>
+			<div class="qt-icon">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2 21c0-3.5 3-6 7-6s7 2.5 7 6M17 11a3 3 0 0 0 0-6M22 21c0-3-2-5-5-5"/></svg>
+			</div>
+			<h3>Groepen</h3>
+			<p class="qt-meta">16 groepen tussen Lek en IJssel — vind er een bij jou in de buurt.</p>
+		</a>
+	</div>
+
+	<!-- ── Agenda ────────────────────────────────────────────────── -->
+	<section class="section-agenda" id="agenda">
+		<div class="container">
+			<div class="section-head">
+				<div>
+					<p class="eyebrow">Agenda</p>
+					<h2 class="section-title">Wat staat er op de planning?</h2>
+					<p class="section-lede">
+						Hier vind je alle aankomende activiteiten binnen de regio. Geef je op met je groep,
+						of kom kijken wat er speelt.
+					</p>
+				</div>
+				<a href="/posts" class="btn btn-outline">
+					Volledige kalender
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+				</a>
+			</div>
+			<div class="event-grid">
+				<a class="event-card" href="/posts">
+					<div class="event-date">
+						<span class="d">14</span>
+						<span class="m">Mei</span>
+					</div>
+					<div class="event-body">
+						<span class="event-tag event-tag--regio">Alle groepen</span>
+						<h4>Hemelvaartsontmoeting</h4>
+						<div class="event-meta">
+							<span>
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
+								Schoonhoven · Buitenterrein
+							</span>
+							<span>
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+								09:30 – 17:00
+							</span>
+						</div>
+					</div>
+				</a>
+				<a class="event-card" href="/posts">
+					<div class="event-date">
+						<span class="d">6</span>
+						<span class="m">Jun</span>
+					</div>
+					<div class="event-body">
+						<span class="event-tag event-tag--training">Vrijwilligers</span>
+						<h4>Praktijkbegeleiderstraining</h4>
+						<div class="event-meta">
+							<span>
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
+								Scouting Academy · IJsselstein
+							</span>
+							<span>
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+								19:30 – 22:00
+							</span>
+						</div>
+					</div>
+				</a>
+				<a class="event-card" href="/posts">
+					<div class="event-date">
+						<span class="d">21</span>
+						<span class="m">Jun</span>
+					</div>
+					<div class="event-body">
+						<span class="event-tag event-tag--water">Watergroepen</span>
+						<h4>Regio Waterspelen</h4>
+						<div class="event-meta">
+							<span>
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
+								Reeuwijkse Plassen
+							</span>
+							<span>
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+								10:00 – 16:00
+							</span>
+						</div>
+					</div>
+				</a>
+				<a class="event-card" href="/posts">
+					<div class="event-date">
+						<span class="d">5</span>
+						<span class="m">Jul</span>
+					</div>
+					<div class="event-body">
+						<span class="event-tag event-tag--land">Landgroepen</span>
+						<h4>Zomerkamp opbouw — Landgroepen</h4>
+						<div class="event-meta">
+							<span>
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
+								Kampterrein Lopikerwaard
+							</span>
+							<span>
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+								Hele dag
+							</span>
+						</div>
+					</div>
+				</a>
+			</div>
+		</div>
+	</section>
+
+	<!-- ── Over de regio ─────────────────────────────────────────── -->
+	<section class="section-regio">
+		<div class="container">
+			<div class="regio-grid">
+				<div class="regio-text">
+					<p class="eyebrow">Over de regio</p>
+					<h2 class="section-title">16 groepen, één regio. Water én land.</h2>
+					<p class="regio-lede">
+						Scouting Regio Lek- en IJsselstreek ligt in het hart van Zuid-Holland,
+						tussen de Lek en de Hollandse IJssel. Acht watergroepen, acht landgroepen —
+						samen verzorgen we activiteiten, trainingen en ondersteuning voor alle
+						vrijwilligers en jeugdleden.
+					</p>
+					<p class="regio-lede">
+						Of je nu zelf wil scouten, je kind wil aanmelden, of jezelf wil ontwikkelen
+						als vrijwilliger — bij ons ben je welkom. Neem een kijkje of stel een vraag.
+					</p>
+					<div class="regio-actions">
+						<a href="/posts" class="btn btn-primary">
+							Lees meer
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+						</a>
+						<a href="/posts" class="btn btn-outline">Stel je vraag</a>
+					</div>
+				</div>
+				<div class="stats-grid">
+					<div class="stat-card">
+						<b>16</b>
+						<span>Scoutinggroepen</span>
+					</div>
+					<div class="stat-card">
+						<b>1800</b>
+						<span>Jeugdleden</span>
+					</div>
+					<div class="stat-card">
+						<b>800</b>
+						<span>Vrijwilligers</span>
+					</div>
+					<div class="stat-card">
+						<b>50+</b>
+						<span>Activiteiten per jaar</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- ── Vacatures ─────────────────────────────────────────────── -->
+	<section class="section-vacatures">
+		<div class="container">
+			<div class="section-head">
+				<div>
+					<p class="eyebrow">Vrijwilligers</p>
+					<h2 class="section-title">Open vacatures in de regio</h2>
+					<p class="section-lede">
+						Op zoek naar een leuke plek voor jouw sterke punten? De regio heeft altijd
+						ruimte voor enthousiaste mensen — bestuur, trainers, organisatie.
+					</p>
+				</div>
+				<a href="/posts" class="btn btn-outline">
+					Alle vacatures
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+				</a>
+			</div>
+			<div class="vacature-grid">
+				<a class="vacature-card" href="/posts">
+					<div class="vacature-header">
+						<div class="vacature-icon">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg>
+						</div>
+						<div>
+							<div class="vacature-org">Regiobestuur</div>
+							<div class="vacature-commit">4–6 uur per week</div>
+						</div>
+					</div>
+					<h4 class="vacature-role">Bestuurslid Communicatie</h4>
+					<p class="vacature-desc">Versterk het regiobestuur en geef richting aan de communicatie naar groepen, ouders en pers.</p>
+					<span class="vacature-link">
+						Lees meer
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+					</span>
+				</a>
+				<a class="vacature-card" href="/posts">
+					<div class="vacature-header">
+						<div class="vacature-icon">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5L2 9z"/><path d="M6 11v5c2 2 10 2 12 0v-5M22 9v5"/></svg>
+						</div>
+						<div>
+							<div class="vacature-org">Scouting Academy</div>
+							<div class="vacature-commit">1 avond per maand</div>
+						</div>
+					</div>
+					<h4 class="vacature-role">Trainer Scouting Academy</h4>
+					<p class="vacature-desc">Begeleid (toekomstige) leiding tijdens trainingsavonden — van basisvaardigheden tot teamleiderschap.</p>
+					<span class="vacature-link">
+						Lees meer
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+					</span>
+				</a>
+				<a class="vacature-card" href="/posts">
+					<div class="vacature-header">
+						<div class="vacature-icon">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><path d="M3 21l9-16 9 16H3zM12 21V11"/></svg>
+						</div>
+						<div>
+							<div class="vacature-org">Regiokamp 2026</div>
+							<div class="vacature-commit">Projectmatig</div>
+						</div>
+					</div>
+					<h4 class="vacature-role">Vrijwilliger Regiokampbouw</h4>
+					<p class="vacature-desc">Help mee met de organisatie van het tweejaarlijkse regiokamp. Logistiek, programma of techniek.</p>
+					<span class="vacature-link">
+						Lees meer
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+					</span>
+				</a>
+			</div>
+		</div>
+	</section>
+
+	<!-- ── Nieuws ─────────────────────────────────────────────────── -->
+	<section class="section-nieuws" id="nieuws">
+		<div class="container">
+			<div class="section-head">
+				<div>
+					<p class="eyebrow">Nieuws</p>
+					<h2 class="section-title">Laatste updates uit de regio</h2>
+					<p class="section-lede">Wat gebeurt er bij de groepen, in het bestuur en op trainingen.</p>
+				</div>
+				<a href="/posts" class="btn btn-outline">
+					Alle nieuws
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+				</a>
+			</div>
+			{postsWithTags.length > 0 ? (
+				<div class="news-grid">
+					{postsWithTags.map(({ post, tags }) => (
+						<PostCard
+							title={post.data.title ?? "Zonder titel"}
+							excerpt={post.data.excerpt}
+							featuredImage={post.data.featured_image}
+							href={`/posts/${post.id}`}
+							date={post.data.publishedAt ?? undefined}
+							readingTime={getReadingTime(post.data.content)}
+							tags={tags}
+						/>
+					))}
+				</div>
+			) : (
+				<p class="no-posts">Er zijn nog geen berichten gepubliceerd.</p>
+			)}
+		</div>
+	</section>
+
+	<!-- ── CTA banner ─────────────────────────────────────────────── -->
+	<section class="section-cta">
+		<div class="container">
+			<div class="cta-banner">
+				<div class="cta-text">
+					<p class="eyebrow" style="color:rgba(255,255,255,.85)">Nieuw bij scouting?</p>
+					<h2>Stap een keer binnen bij een groep.</h2>
+					<p>Veel groepen organiseren een open opkomst — kom een avond meedraaien en
+						zie of het iets voor je is. We helpen je graag de juiste groep vinden.</p>
+				</div>
+				<div class="cta-actions">
+					<a href="/posts" class="btn btn-light">Bekijk het laatste nieuws</a>
+					<a href="/posts" class="btn btn-ghost">Stel een vraag</a>
+				</div>
+			</div>
+		</div>
+	</section>
 </Base>
 
 <style>
-	.home-content {
-		max-width: var(--wide-width);
+	/* ── Shared container ────────────────────────────────────────── */
+	.container {
+		max-width: 1240px;
 		margin: 0 auto;
-		padding: var(--spacing-16) var(--spacing-6);
+		padding: 0 32px;
 	}
 
-	/* Featured Section - Side by side */
-	.featured-section {
-		margin-bottom: var(--spacing-16);
-	}
-
-	.featured-grid {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: var(--spacing-8);
-		align-items: center;
-	}
-
-	.featured-image-link {
-		grid-column: 1 / 3;
-		display: block;
-		/* Extend to viewport edge, but cap at -6rem minimum extension */
-		margin-left: min(
-			-6rem,
-			calc(-1 * (var(--spacing-6) + (100vw - var(--wide-width)) / 2))
-		);
-	}
-
-	.featured-image {
-		overflow: hidden;
-		border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
-		background: var(--color-surface);
-	}
-
-	.featured-image img {
-		width: 100%;
-		height: auto;
-		aspect-ratio: 4 / 3;
-		object-fit: cover;
-		transition: transform 0.4s ease;
-	}
-
-	.featured-image-link:hover .featured-image img,
-	.featured-grid:has(.featured-title-link:hover) .featured-image img {
-		transform: scale(1.02);
-	}
-
-	.featured-content {
+	/* ── Section header ──────────────────────────────────────────── */
+	.section-head {
 		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-4);
-	}
-
-	.featured-meta {
-		display: flex;
-		align-items: center;
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: 24px;
+		margin-bottom: 40px;
 		flex-wrap: wrap;
-		column-gap: var(--spacing-3);
-		row-gap: var(--spacing-1);
-		font-size: var(--font-size-sm);
-		color: var(--color-muted);
 	}
 
-	.meta-dot {
-		width: 3px;
-		height: 3px;
-		border-radius: 50%;
-		background: var(--color-muted);
-	}
-
-	/* Featured bylines */
-	.featured-bylines {
-		display: flex;
-		align-items: center;
-		gap: 2px;
-	}
-
-	.featured-byline {
+	.eyebrow {
 		display: inline-flex;
 		align-items: center;
-		gap: var(--spacing-2);
+		gap: 8px;
+		font-size: 12px;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: .08em;
+		color: var(--color-primary-hover);
+		margin: 0 0 12px;
 	}
 
-	.featured-byline-avatar {
-		width: var(--avatar-size-md);
-		height: var(--avatar-size-md);
-		border-radius: 50%;
-		object-fit: cover;
-	}
-
-	.featured-byline-name {
-		font-weight: 500;
-		color: var(--color-text-secondary);
-	}
-
-	.byline-sep {
-		color: var(--color-muted);
-		margin-right: 2px;
-	}
-
-	.byline-more {
-		font-size: var(--font-size-xs);
-		color: var(--color-muted);
-		margin-left: 2px;
-	}
-
-	.featured-title-link {
-		text-decoration: none;
-		color: inherit;
-	}
-
-	.featured-title {
-		font-size: clamp(var(--font-size-2xl), 4vw, var(--font-size-4xl));
-		font-weight: 700;
-		line-height: var(--leading-tight);
-		letter-spacing: var(--tracking-tight);
-		transition: color var(--transition-fast);
-	}
-
-	.featured-title-link:hover .featured-title,
-	.featured-grid:has(.featured-image-link:hover) .featured-title {
-		color: var(--color-primary);
-	}
-
-	.featured-excerpt {
-		font-size: var(--font-size-lg);
-		line-height: var(--leading-relaxed);
-		color: var(--color-text-secondary);
-	}
-
-	.featured-tags {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--spacing-2);
-		margin-top: var(--spacing-2);
-	}
-
-	.featured-tag {
+	.eyebrow::before {
+		content: "";
+		width: 24px;
+		height: 2px;
+		background: currentColor;
 		display: inline-block;
-		padding: var(--tag-padding-y) var(--spacing-3);
-		font-size: var(--font-size-xs);
-		font-weight: 600;
-		color: #ffffff;
-		background: var(--color-primary);
-		border-radius: var(--radius);
-		text-decoration: none;
-		transition: background var(--transition-fast);
-	}
-
-	.featured-tag:hover {
-		color: #ffffff;
-		background: var(--color-primary-hover);
-	}
-
-	/* Section header */
-	.section-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: baseline;
-		margin-bottom: var(--spacing-8);
-		padding-bottom: var(--spacing-4);
-		border-bottom: 2px solid var(--color-primary);
 	}
 
 	.section-title {
-		font-size: var(--font-size-sm);
-		font-weight: 700;
+		font-size: clamp(1.75rem, 2.6vw, 2.25rem);
+		font-weight: 900;
+		letter-spacing: -.015em;
+		margin: 0 0 12px;
+		color: var(--color-text);
+	}
+
+	.section-lede {
+		font-size: 17px;
+		color: var(--color-muted);
+		max-width: 60ch;
+		line-height: 1.65;
+		margin: 0;
+	}
+
+	/* ── Buttons ─────────────────────────────────────────────────── */
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		padding: 12px 24px;
+		border-radius: var(--radius-pill);
+		font-weight: 800;
+		font-size: 13px;
 		text-transform: uppercase;
-		letter-spacing: var(--tracking-wider);
+		letter-spacing: .06em;
+		border: 2px solid transparent;
+		cursor: pointer;
+		font-family: inherit;
+		text-decoration: none;
+		transition: all var(--transition-base);
+		white-space: nowrap;
+	}
+
+	.btn-primary {
+		background: var(--color-primary);
+		color: #fff;
+		box-shadow: 0 8px 18px rgba(91,174,58,.25);
+	}
+	.btn-primary:hover { background: var(--color-primary-hover); transform: translateY(-1px); color: #fff; }
+
+	.btn-light { background: #fff; color: var(--color-text); }
+	.btn-light:hover { transform: translateY(-1px); box-shadow: var(--shadow-card); color: var(--color-text); }
+
+	.btn-ghost { background: rgba(255,255,255,.18); color: #fff; border-color: rgba(255,255,255,.3); }
+	.btn-ghost:hover { background: rgba(255,255,255,.28); color: #fff; }
+
+	.btn-outline {
+		background: #fff;
+		color: var(--color-text);
+		border-color: var(--color-border);
+	}
+	.btn-outline:hover { border-color: var(--color-text); color: var(--color-text); }
+
+	/* ── Hero ────────────────────────────────────────────────────── */
+	.hero {
+		position: relative;
+		background: var(--color-primary);
+		overflow: hidden;
+		isolation: isolate;
+	}
+
+	.hero-blobs {
+		position: absolute;
+		inset: 0;
+		z-index: 0;
+	}
+
+	.hero-blobs svg {
+		width: 100%;
+		height: 100%;
+		display: block;
+	}
+
+	.hero-dot {
+		position: absolute;
+		border-radius: 50%;
+		z-index: 1;
+	}
+
+	.hero-dot--w { background: #fff; }
+	.hero-dot--b { background: var(--color-accent); }
+	.hero-dot--n { background: var(--color-navy); }
+
+	.hero-inner {
+		position: relative;
+		max-width: 1240px;
+		margin: 0 auto;
+		padding: 80px 32px 220px;
+		text-align: center;
+		z-index: 2;
+	}
+
+	.hero-eyebrow {
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+		padding: 6px 14px;
+		border-radius: var(--radius-pill);
+		background: rgba(255,255,255,.18);
+		color: #fff;
+		font-size: 12px;
+		font-weight: 800;
+		letter-spacing: .12em;
+		text-transform: uppercase;
+		margin-bottom: 22px;
+	}
+
+	.pulse {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background: #fff;
+		box-shadow: 0 0 0 0 rgba(255,255,255,.6);
+		animation: pulse 2s ease-out infinite;
+	}
+
+	@keyframes pulse {
+		0% { box-shadow: 0 0 0 0 rgba(255,255,255,.6); }
+		70% { box-shadow: 0 0 0 12px rgba(255,255,255,0); }
+		100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+	}
+
+	.hero h1 {
+		font-size: clamp(2.5rem, 6vw, 5rem);
+		font-weight: 900;
+		color: #fff;
+		letter-spacing: -.02em;
+		line-height: 1.02;
+		margin: 0 auto 22px;
+		max-width: 14ch;
+	}
+
+	.hero h1 em {
+		font-style: normal;
+		display: inline-block;
+		background: linear-gradient(180deg, transparent 62%, rgba(255,255,255,.32) 62%);
+		padding: 0 6px;
+	}
+
+	.hero-sub {
+		font-size: 19px;
+		line-height: 1.55;
+		color: rgba(255,255,255,.92);
+		max-width: 56ch;
+		margin: 0 auto 32px;
+	}
+
+	.hero-cta {
+		display: inline-flex;
+		gap: 12px;
+		flex-wrap: wrap;
+		justify-content: center;
+	}
+
+	/* ── Quick tiles ─────────────────────────────────────────────── */
+	.quick-tiles {
+		position: relative;
+		z-index: 4;
+		max-width: 1240px;
+		margin: -130px auto 0;
+		padding: 0 32px;
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 20px;
+	}
+
+	.quick-tile {
+		background: #fff;
+		border-radius: 22px;
+		padding: 24px;
+		box-shadow: 0 16px 40px rgba(0,0,0,.10);
+		text-decoration: none;
+		color: var(--color-text);
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		transition: transform var(--transition-base), box-shadow var(--transition-base);
+		position: relative;
+		overflow: hidden;
+		min-height: 168px;
+	}
+
+	.quick-tile:hover {
+		transform: translateY(-4px);
+		box-shadow: 0 22px 48px rgba(0,0,0,.13);
+		text-decoration: none;
+		color: var(--color-text);
+	}
+
+	.qt-icon {
+		width: 44px;
+		height: 44px;
+		border-radius: 14px;
+		background: color-mix(in oklab, var(--qt-accent, var(--color-accent)) 15%, white);
+		color: var(--qt-accent, var(--color-accent));
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+	}
+
+	.quick-tile h3 {
+		font-size: 18px;
+		font-weight: 800;
+		margin: 0;
+		line-height: 1.2;
+	}
+
+	.qt-meta {
+		font-size: 13px;
+		color: var(--color-muted);
+		line-height: 1.5;
+		margin-top: auto;
+	}
+
+	.qt-arrow {
+		position: absolute;
+		top: 22px;
+		right: 22px;
+		color: var(--color-muted);
+		transition: transform var(--transition-base), color var(--transition-base);
+	}
+
+	.quick-tile:hover .qt-arrow {
+		transform: translate(2px, -2px);
 		color: var(--color-primary);
 	}
 
-	.section-link {
-		font-size: var(--font-size-sm);
-		color: var(--color-accent);
-		text-decoration: none;
-		transition: color var(--transition-fast);
+	.quick-tile--featured {
+		background: var(--color-primary);
+		color: #fff;
 	}
 
-	.section-link:hover {
-		color: var(--color-accent-hover);
+	.quick-tile--featured h3 { color: #fff; }
+	.quick-tile--featured .qt-meta { color: rgba(255,255,255,.85); }
+	.quick-tile--featured .qt-arrow { color: rgba(255,255,255,.7); }
+	.quick-tile--featured:hover { color: #fff; }
+
+	.quick-tile--featured .qt-icon {
+		background: rgba(255,255,255,.18);
+		color: #fff;
 	}
 
-	/* Posts Grid */
-	.posts-section {
+	.quick-tile--featured:hover .qt-arrow { color: rgba(255,255,255,.95); }
+
+	.qt-badge {
+		position: absolute;
+		top: 18px;
+		right: 52px;
+		padding: 3px 8px;
+		border-radius: var(--radius-pill);
+		font-size: 10px;
+		font-weight: 800;
+		letter-spacing: .08em;
+		text-transform: uppercase;
+		background: var(--color-accent);
+		color: #fff;
 	}
 
-	.posts-grid {
+	/* ── Agenda section ──────────────────────────────────────────── */
+	.section-agenda {
+		padding: 96px 0 96px;
+	}
+
+	.event-grid {
 		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: var(--spacing-12) var(--spacing-8);
+		grid-template-columns: repeat(2, 1fr);
+		gap: 20px;
 	}
 
-	/* Empty State */
-	.empty-state {
+	.event-card {
+		background: #fff;
+		border-radius: 22px;
+		padding: 22px;
+		box-shadow: var(--shadow-card);
+		display: flex;
+		gap: 18px;
+		align-items: stretch;
+		transition: transform var(--transition-base), box-shadow var(--transition-base);
+		text-decoration: none;
+		color: var(--color-text);
+		border: 1px solid var(--color-border);
+	}
+
+	.event-card:hover {
+		transform: translateY(-2px);
+		box-shadow: var(--shadow-card-hover);
+		text-decoration: none;
+		color: var(--color-text);
+	}
+
+	.event-date {
+		flex-shrink: 0;
+		width: 64px;
+		border-radius: 16px;
+		background: var(--color-primary);
+		color: #fff;
+		text-align: center;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: var(--spacing-3);
-		text-align: center;
-		padding: var(--spacing-20) var(--spacing-6);
-		max-width: 400px;
-		margin: 0 auto;
+		justify-content: center;
+		padding: 10px 0;
 	}
 
-	.empty-state h2 {
-		font-size: var(--font-size-2xl);
-		font-weight: 600;
+	.event-date .d { font-size: 26px; font-weight: 900; line-height: 1; }
+	.event-date .m { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; margin-top: 4px; }
+
+	.event-body { flex: 1; }
+
+	.event-tag {
+		display: inline-block;
+		font-size: 11px;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: .06em;
+		padding: 3px 8px;
+		border-radius: var(--radius-sm);
+		margin-bottom: 4px;
 	}
 
-	.empty-state p {
+	.event-tag--regio { background: #E6EAF2; color: var(--color-navy); }
+	.event-tag--training { background: #E6EAF2; color: var(--color-navy); }
+	.event-tag--water { background: #DDF1FA; color: var(--color-accent-hover); }
+	.event-tag--land { background: #EAF6E2; color: var(--color-primary-hover); }
+
+	.event-body h4 {
+		font-size: 17px;
+		font-weight: 800;
+		margin: 4px 0 6px;
+		line-height: 1.25;
+	}
+
+	.event-meta {
+		display: flex;
+		gap: 14px;
+		flex-wrap: wrap;
+		font-size: 13px;
 		color: var(--color-muted);
 	}
 
-	.btn {
-		display: inline-block;
-		margin-top: var(--spacing-4);
-		padding: var(--spacing-3) var(--spacing-6);
-		background: var(--color-primary);
-		color: #ffffff;
+	.event-meta span {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+	}
+
+	/* ── Over de regio ───────────────────────────────────────────── */
+	.section-regio {
+		padding: 0 0 96px;
+	}
+
+	.regio-grid {
+		display: grid;
+		grid-template-columns: 1.1fr 1fr;
+		gap: 56px;
+		align-items: center;
+	}
+
+	.regio-lede {
+		font-size: 17px;
+		color: var(--color-muted);
+		line-height: 1.65;
+		margin-bottom: 16px;
+	}
+
+	.regio-actions {
+		display: flex;
+		gap: 12px;
+		flex-wrap: wrap;
+		margin-top: 28px;
+	}
+
+	.stats-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 20px;
+	}
+
+	.stat-card {
+		background: #fff;
+		border-radius: var(--radius-lg);
+		box-shadow: var(--shadow-card);
+		padding: 28px 24px;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		border: 1px solid var(--color-border);
+	}
+
+	.stat-card b {
+		font-size: clamp(2rem, 3vw, 2.75rem);
+		font-weight: 900;
+		color: var(--color-primary);
+		line-height: 1;
+	}
+
+	.stat-card span {
+		font-size: 13px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: .06em;
+		color: var(--color-muted);
+	}
+
+	/* ── Vacatures ───────────────────────────────────────────────── */
+	.section-vacatures {
+		background: var(--color-bg-subtle);
+		padding: 96px 0;
+	}
+
+	.vacature-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 20px;
+	}
+
+	.vacature-card {
+		background: #fff;
+		border-radius: 22px;
+		padding: 28px;
+		box-shadow: var(--shadow-card);
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
 		text-decoration: none;
-		border-radius: var(--radius);
-		font-size: var(--font-size-sm);
-		font-weight: 600;
-		transition: background var(--transition-fast);
+		color: var(--color-text);
+		border: 1px solid var(--color-border);
+		transition: transform var(--transition-base), box-shadow var(--transition-base);
 	}
 
-	.btn:hover {
-		background: var(--color-primary-hover);
+	.vacature-card:hover {
+		transform: translateY(-3px);
+		box-shadow: var(--shadow-card-hover);
+		text-decoration: none;
+		color: var(--color-text);
 	}
 
-	/* Responsive */
-	@media (max-width: 900px) {
-		.home-content {
-			padding: var(--spacing-6) var(--spacing-4) var(--spacing-12);
-		}
-
-		.featured-image-link {
-			margin-left: 0;
-		}
-
-		.featured-grid {
-			grid-template-columns: 1fr;
-			gap: var(--spacing-6);
-		}
-
-		.featured-image {
-			border-radius: var(--radius-lg);
-		}
-
-		.featured-image img {
-			aspect-ratio: 16 / 9;
-		}
-
-		.posts-grid {
-			grid-template-columns: repeat(2, 1fr);
-			gap: var(--spacing-8) var(--spacing-6);
-		}
+	.vacature-header {
+		display: flex;
+		align-items: center;
+		gap: 12px;
 	}
 
-	@media (max-width: 600px) {
-		.featured-title {
-			font-size: var(--font-size-2xl);
-		}
+	.vacature-icon {
+		width: 44px;
+		height: 44px;
+		border-radius: 14px;
+		background: #DDF1FA;
+		color: var(--color-accent-hover);
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+	}
 
-		.posts-grid {
-			grid-template-columns: 1fr;
-			gap: var(--spacing-8);
-		}
+	.vacature-org {
+		font-size: 11px;
+		font-weight: 800;
+		letter-spacing: .08em;
+		text-transform: uppercase;
+		color: var(--color-muted);
+	}
+
+	.vacature-commit {
+		font-size: 12px;
+		color: var(--color-muted);
+	}
+
+	.vacature-role {
+		font-size: 19px;
+		font-weight: 800;
+		margin: 0;
+		line-height: 1.25;
+	}
+
+	.vacature-desc {
+		font-size: 14px;
+		color: var(--color-muted);
+		line-height: 1.55;
+		margin: 0;
+		flex: 1;
+	}
+
+	.vacature-link {
+		font-size: 13px;
+		font-weight: 800;
+		color: var(--color-primary-hover);
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		margin-top: 6px;
+	}
+
+	/* ── Nieuws ──────────────────────────────────────────────────── */
+	.section-nieuws {
+		padding: 96px 0;
+	}
+
+	.news-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 24px;
+	}
+
+	.no-posts {
+		color: var(--color-muted);
+		font-size: var(--font-size-base);
+	}
+
+	/* ── CTA banner ──────────────────────────────────────────────── */
+	.section-cta {
+		padding: 0 0 96px;
+	}
+
+	.cta-banner {
+		background: var(--color-primary);
+		border-radius: var(--radius-xl);
+		padding: 56px 64px;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 48px;
+		flex-wrap: wrap;
+	}
+
+	.cta-text { flex: 1; min-width: 280px; }
+	.cta-text h2 {
+		font-size: clamp(1.75rem, 2.6vw, 2.5rem);
+		font-weight: 900;
+		color: #fff;
+		margin: 8px 0 12px;
+	}
+	.cta-text p {
+		font-size: 16px;
+		color: rgba(255,255,255,.85);
+		line-height: 1.6;
+		margin: 0;
+		max-width: 52ch;
+	}
+
+	.cta-actions {
+		display: flex;
+		gap: 12px;
+		flex-wrap: wrap;
+		flex-shrink: 0;
+	}
+
+	/* ── Responsive ──────────────────────────────────────────────── */
+	@media (max-width: 1000px) {
+		.quick-tiles { grid-template-columns: repeat(2, 1fr); margin-top: 0; padding-top: 40px; }
+		.regio-grid { grid-template-columns: 1fr; }
+		.vacature-grid { grid-template-columns: repeat(2, 1fr); }
+		.news-grid { grid-template-columns: repeat(2, 1fr); }
+	}
+
+	@media (max-width: 680px) {
+		.container { padding: 0 20px; }
+		.hero-inner { padding: 56px 20px 180px; }
+		.quick-tiles { grid-template-columns: 1fr; padding: 0 20px; }
+		.event-grid { grid-template-columns: 1fr; }
+		.vacature-grid { grid-template-columns: 1fr; }
+		.news-grid { grid-template-columns: 1fr; }
+		.stats-grid { grid-template-columns: 1fr 1fr; }
+		.cta-banner { padding: 40px 28px; flex-direction: column; align-items: flex-start; }
+		.section-head { flex-direction: column; align-items: flex-start; }
 	}
 </style>

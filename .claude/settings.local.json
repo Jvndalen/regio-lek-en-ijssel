@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:www.regiolekenijssel.nl)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(npx astro *)"
     ]
   }
 }

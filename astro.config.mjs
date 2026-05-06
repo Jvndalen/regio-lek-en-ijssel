@@ -37,14 +37,14 @@ export default defineConfig({
 			provider: fontProviders.google(),
 			name: "Nunito",
 			cssVariable: "--font-display",
-			weights: [400, 600, 700, 800],
+			weights: [400, 600, 700, 800, 900],
 			fallbacks: ["sans-serif"],
 		},
 		{
 			provider: fontProviders.google(),
-			name: "Source Sans 3",
+			name: "Nunito",
 			cssVariable: "--font-sans",
-			weights: [400, 500, 600],
+			weights: [400, 600, 700, 800, 900],
 			fallbacks: ["sans-serif"],
 		},
 		{

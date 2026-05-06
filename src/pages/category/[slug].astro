@@ -23,9 +23,6 @@ const { entries: posts, cacheHint } = await getEmDashCollection("posts", {
 
 Astro.cache.set(cacheHint);
 
-// Single batched query for tags on every post in this category, rather
-// than calling getEntryTerms() per post (which would be one round-trip
-// per post).
 const tagsByEntry = await getTermsForEntries(
 	"posts",
 	posts.map((p) => p.data.id),
@@ -37,93 +34,149 @@ const filteredPosts = posts.map((post) => ({
 }));
 ---
 
-<Base title={`${term.label} posts`} description={`All posts in ${term.label}`}>
-	<section class="archive-section">
-		<header class="archive-header">
-			<span class="archive-label">Category</span>
-			<h1 class="archive-title">{term.label}</h1>
-			<p class="archive-count">
-				{filteredPosts.length}
-				{filteredPosts.length === 1 ? "post" : "posts"}
+<Base title={`${term.label}`} description={`Berichten in de categorie ${term.label}`}>
+	<section class="page-hero">
+		<div class="hero-blobs" aria-hidden="true">
+			<svg viewBox="0 0 1440 460" preserveAspectRatio="none">
+				<path d="M0,0 L1440,0 L1440,340 C1180,440 720,340 480,400 C240,460 120,400 0,440 Z"
+					  fill="#A8D58A"/>
+			</svg>
+		</div>
+		<div class="hero-container">
+			<nav class="breadcrumb" aria-label="Broodkruimels">
+				<a href="/">Home</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<a href="/posts">Nieuws</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<span aria-current="page">{term.label}</span>
+			</nav>
+			<p class="archive-label">Categorie</p>
+			<h1>{term.label}</h1>
+			<p class="hero-lede">
+				{filteredPosts.length} {filteredPosts.length === 1 ? "bericht" : "berichten"}
 			</p>
-		</header>
+		</div>
+	</section>
 
-		{
-			filteredPosts.length === 0 ? (
-				<p class="no-posts">No posts in this category yet.</p>
-			) : (
-				<div class="posts-grid">
-					{filteredPosts.map(({ post, tags }) => (
-						<PostCard
-							title={post.data.title}
-							excerpt={post.data.excerpt}
-							featuredImage={post.data.featured_image}
-							href={`/posts/${post.id}`}
-							date={post.data.publishedAt ?? undefined}
-							readingTime={getReadingTime(post.data.content)}
-							tags={tags.map((t) => ({ slug: t.slug, label: t.label }))}
-						/>
-					))}
-				</div>
-			)
-		}
+	<section class="archive-section">
+		<div class="container">
+			{
+				filteredPosts.length === 0 ? (
+					<p class="no-posts">Nog geen berichten in deze categorie.</p>
+				) : (
+					<div class="posts-grid">
+						{filteredPosts.map(({ post, tags }) => (
+							<PostCard
+								title={post.data.title}
+								excerpt={post.data.excerpt}
+								featuredImage={post.data.featured_image}
+								href={`/posts/${post.id}`}
+								date={post.data.publishedAt ?? undefined}
+								readingTime={getReadingTime(post.data.content)}
+								tags={tags.map((t) => ({ slug: t.slug, label: t.label }))}
+							/>
+						))}
+					</div>
+				)
+			}
+		</div>
 	</section>
 </Base>
 
 <style>
-	.archive-section {
-		max-width: var(--wide-width);
-		margin: 0 auto;
-		padding: var(--spacing-12) var(--spacing-6);
+	.page-hero {
+		position: relative;
+		background: var(--color-primary);
+		overflow: hidden;
+		isolation: isolate;
 	}
 
-	.archive-header {
-		margin-bottom: var(--spacing-12);
-		padding-bottom: var(--spacing-8);
-		border-bottom: 1px solid var(--color-border-subtle);
+	.hero-blobs {
+		position: absolute;
+		inset: 0;
+		z-index: 0;
 	}
+
+	.hero-blobs svg { width: 100%; height: 100%; display: block; }
+
+	.hero-container {
+		position: relative;
+		z-index: 1;
+		max-width: 1240px;
+		margin: 0 auto;
+		padding: 56px 32px 80px;
+	}
+
+	.breadcrumb {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 20px;
+		font-size: var(--font-size-sm);
+	}
+
+	.breadcrumb a {
+		color: rgba(255,255,255,.85);
+		text-decoration: none;
+		font-weight: 600;
+	}
+
+	.breadcrumb a:hover { color: #fff; }
+	.breadcrumb .sep { color: rgba(255,255,255,.5); }
+	.breadcrumb span:last-child { color: #fff; font-weight: 700; }
 
 	.archive-label {
-		display: block;
-		font-size: var(--font-size-xs);
-		font-weight: 500;
-		color: var(--color-accent);
+		font-size: 12px;
+		font-weight: 800;
 		text-transform: uppercase;
-		letter-spacing: var(--tracking-wider);
-		margin-bottom: var(--spacing-2);
+		letter-spacing: .08em;
+		color: rgba(255,255,255,.75);
+		margin-bottom: 8px;
+		display: block;
 	}
 
-	.archive-title {
-		font-size: var(--font-size-4xl);
-		font-weight: 700;
-		letter-spacing: var(--tracking-tight);
-		margin-bottom: var(--spacing-2);
+	.page-hero h1 {
+		font-size: clamp(2rem, 4vw, 3.25rem);
+		font-weight: 900;
+		color: #fff;
+		letter-spacing: -.02em;
+		margin-bottom: 10px;
 	}
 
-	.archive-count {
-		font-size: var(--font-size-sm);
-		color: var(--color-muted);
+	.hero-lede {
+		font-size: 16px;
+		color: rgba(255,255,255,.8);
+		margin: 0;
+	}
+
+	.archive-section {
+		padding: 56px 0 96px;
+	}
+
+	.container {
+		max-width: 1240px;
+		margin: 0 auto;
+		padding: 0 32px;
 	}
 
 	.posts-grid {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
-		gap: var(--spacing-12) var(--spacing-8);
+		gap: 24px;
 	}
 
 	.no-posts {
 		color: var(--color-muted);
+		font-size: var(--font-size-lg);
 	}
 
 	@media (max-width: 900px) {
-		.posts-grid {
-			grid-template-columns: repeat(2, 1fr);
-		}
+		.posts-grid { grid-template-columns: repeat(2, 1fr); }
 	}
 
 	@media (max-width: 600px) {
-		.posts-grid {
-			grid-template-columns: 1fr;
-		}
+		.hero-container { padding: 40px 20px 60px; }
+		.container { padding: 0 20px; }
+		.posts-grid { grid-template-columns: 1fr; }
 	}
 </style>
