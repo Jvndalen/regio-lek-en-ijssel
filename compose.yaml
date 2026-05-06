@@ -1,6 +1,6 @@
 services:
   emdash:
-    image: ghcr.io/jvndalen/regio-lek-en-ijssel:latest
+    build: .
     ports:
       - "4321:4321"
     volumes:
