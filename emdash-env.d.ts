@@ -5,19 +5,6 @@
 
 import type { ContentBylineCredit, PortableTextBlock } from "emdash";
 
-export interface ElementorLibrary {
-  id: string;
-  slug: string | null;
-  status: string;
-  title: string;
-  content?: PortableTextBlock[];
-  excerpt?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  publishedAt: Date | null;
-  bylines?: ContentBylineCredit[];
-}
-
 export interface OurGallery {
   id: string;
   slug: string | null;
@@ -127,19 +114,6 @@ export interface Post {
   bylines?: ContentBylineCredit[];
 }
 
-export interface Slider {
-  id: string;
-  slug: string | null;
-  status: string;
-  title: string;
-  content?: PortableTextBlock[];
-  excerpt?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  publishedAt: Date | null;
-  bylines?: ContentBylineCredit[];
-}
-
 export interface Wpcf7ContactForm {
   id: string;
   slug: string | null;
@@ -155,7 +129,6 @@ export interface Wpcf7ContactForm {
 
 declare module "emdash" {
   interface EmDashCollections {
-    elementor_library: ElementorLibrary;
     our_gallery: OurGallery;
     our_service: OurService;
     our_team: OurTeam;
@@ -164,7 +137,6 @@ declare module "emdash" {
     popup: Popup;
     popup_theme: PopupTheme;
     posts: Post;
-    slider: Slider;
     wpcf7_contact_form: Wpcf7ContactForm;
   }
 }

@@ -46,7 +46,7 @@ const postsWithTags = posts.map((post) => ({
 					  fill="#5BAE3A"/>
 			</svg>
 		</div>
-		<div class="hero-dot hero-dot--w" style="top:8%;right:-3%;width:220px;height:220px;" aria-hidden="true"></div>
+		<div class="hero-dot hero-dot--w hero-dot--main" style="top:8%;right:-3%;width:220px;height:220px;" aria-hidden="true"></div>
 		<div class="hero-dot hero-dot--n" style="top:40%;right:-2%;width:60px;height:60px;" aria-hidden="true"></div>
 		<div class="hero-dot hero-dot--b" style="top:62%;right:-4%;width:140px;height:140px;" aria-hidden="true"></div>
 		<div class="hero-dot hero-dot--w" style="top:24%;left:4%;width:36px;height:36px;opacity:.35" aria-hidden="true"></div>
@@ -987,6 +987,7 @@ const postsWithTags = posts.map((post) => ({
 
 	@media (max-width: 680px) {
 		.container { padding: 0 20px; }
+		.hero-dot--main { right: -10% !important; top: -14% !important; width: 160px !important; height: 160px !important; }
 		.hero-inner { padding: 56px 20px 180px; }
 		.quick-tiles { grid-template-columns: 1fr; padding: 0 20px; }
 		.event-grid { grid-template-columns: 1fr; }
