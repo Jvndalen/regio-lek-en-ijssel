@@ -100,22 +100,23 @@ const { items: results } = query
 
 	.search-input:focus {
 		outline: none;
-		border-color: var(--color-accent);
+		border-color: var(--color-primary);
 	}
 
 	.search-button {
 		padding: var(--spacing-2) var(--spacing-6);
 		font-size: var(--font-size-base);
-		background: var(--color-accent);
-		color: var(--color-on-accent);
+		background: var(--color-primary);
+		color: #ffffff;
 		border: none;
 		border-radius: var(--radius);
 		cursor: pointer;
-		font-weight: 500;
+		font-weight: 600;
+		transition: background var(--transition-fast);
 	}
 
 	.search-button:hover {
-		opacity: 0.9;
+		background: var(--color-primary-hover);
 	}
 
 	.search-summary {

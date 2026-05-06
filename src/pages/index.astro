@@ -65,7 +65,7 @@ const gridPostsWithTags = gridPosts.map((post) => ({
 // Format date helper
 function formatDate(date: Date | null | undefined) {
 	if (!date) return null;
-	return date.toLocaleDateString("en-US", {
+	return date.toLocaleDateString("nl-NL", {
 		year: "numeric",
 		month: "long",
 		day: "numeric",
@@ -310,7 +310,7 @@ function formatDate(date: Date | null | undefined) {
 
 	.featured-title-link:hover .featured-title,
 	.featured-grid:has(.featured-image-link:hover) .featured-title {
-		color: var(--color-accent);
+		color: var(--color-primary);
 	}
 
 	.featured-excerpt {
@@ -328,20 +328,19 @@ function formatDate(date: Date | null | undefined) {
 
 	.featured-tag {
 		display: inline-block;
-		padding: var(--tag-padding-y) var(--spacing-2);
+		padding: var(--tag-padding-y) var(--spacing-3);
 		font-size: var(--font-size-xs);
-		color: var(--color-text-secondary);
-		background: var(--color-surface);
+		font-weight: 600;
+		color: #ffffff;
+		background: var(--color-primary);
 		border-radius: var(--radius);
 		text-decoration: none;
-		transition:
-			color var(--transition-fast),
-			background var(--transition-fast);
+		transition: background var(--transition-fast);
 	}
 
 	.featured-tag:hover {
-		color: var(--color-text);
-		background: var(--color-border);
+		color: #ffffff;
+		background: var(--color-primary-hover);
 	}
 
 	/* Section header */
@@ -351,15 +350,15 @@ function formatDate(date: Date | null | undefined) {
 		align-items: baseline;
 		margin-bottom: var(--spacing-8);
 		padding-bottom: var(--spacing-4);
-		border-bottom: 1px solid var(--color-border-subtle);
+		border-bottom: 2px solid var(--color-primary);
 	}
 
 	.section-title {
 		font-size: var(--font-size-sm);
-		font-weight: 500;
+		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: var(--tracking-wider);
-		color: var(--color-muted);
+		color: var(--color-primary);
 	}
 
 	.section-link {
@@ -408,17 +407,17 @@ function formatDate(date: Date | null | undefined) {
 		display: inline-block;
 		margin-top: var(--spacing-4);
 		padding: var(--spacing-3) var(--spacing-6);
-		background: var(--color-accent);
-		color: var(--color-on-accent);
+		background: var(--color-primary);
+		color: #ffffff;
 		text-decoration: none;
 		border-radius: var(--radius);
 		font-size: var(--font-size-sm);
-		font-weight: 500;
+		font-weight: 600;
 		transition: background var(--transition-fast);
 	}
 
 	.btn:hover {
-		background: var(--color-accent-hover);
+		background: var(--color-primary-hover);
 	}
 
 	/* Responsive */

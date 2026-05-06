@@ -77,27 +77,15 @@ const isLoggedIn = !!Astro.locals.user;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="nl">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<Font cssVariable="--font-display" preload />
 		<Font cssVariable="--font-sans" preload />
 		<Font cssVariable="--font-mono" />
 		<title>{fullTitle}</title>
 		<EmDashHead page={pageCtx} />
-		<script is:inline>
-			// Apply theme immediately to prevent flash
-			(function () {
-				var c = document.cookie;
-				var i = c.indexOf("theme=");
-				var theme = i >= 0 ? c.slice(i + 6).split(";")[0] : null;
-				if (theme === "dark" || theme === "light") {
-					document.documentElement.classList.add(theme);
-				} else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-					document.documentElement.classList.add("dark");
-				}
-			})();
-		</script>
 	</head>
 	<body>
 		<EmDashBodyStart page={pageCtx} />
@@ -201,150 +189,10 @@ const isLoggedIn = !!Astro.locals.user;
 					<p class="footer-copyright">
 						Powered by <a href="https://emdashcms.com">EmDash</a>
 					</p>
-					<div class="theme-switcher">
-						<button
-							type="button"
-							class="theme-btn"
-							data-theme="light"
-							aria-label="Light mode"
-						>
-							<svg
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><circle cx="12" cy="12" r="5"></circle><line
-									x1="12"
-									y1="1"
-									x2="12"
-									y2="3"></line><line x1="12" y1="21" x2="12" y2="23"
-								></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"
-								></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"
-								></line><line x1="1" y1="12" x2="3" y2="12"></line><line
-									x1="21"
-									y1="12"
-									x2="23"
-									y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"
-								></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"
-								></line></svg
-							>
-						</button>
-						<button
-							type="button"
-							class="theme-btn"
-							data-theme="dark"
-							aria-label="Dark mode"
-						>
-							<svg
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
-								></path></svg
-							>
-						</button>
-						<button
-							type="button"
-							class="theme-btn"
-							data-theme="system"
-							aria-label="System theme"
-						>
-							<svg
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><rect x="2" y="3" width="20" height="14" rx="2" ry="2"
-								></rect><line x1="8" y1="21" x2="16" y2="21"></line><line
-									x1="12"
-									y1="17"
-									x2="12"
-									y2="21"></line></svg
-							>
-						</button>
-					</div>
 				</div>
 			</div>
 		</footer>
 
-		<script>
-			// Theme switcher
-			const THEME_REGEX = /theme=([^;]+)/;
-			const themeBtns =
-				document.querySelectorAll<HTMLButtonElement>(".theme-btn");
-			const root = document.documentElement;
-
-			function setCookie(
-				name: string,
-				value: string,
-				maxAge: number = 31536000
-			) {
-				const secure = location.protocol === "https:" ? "; Secure" : "";
-				if (value === "") {
-					document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax${secure}`;
-				} else {
-					document.cookie = `${name}=${value}; path=/; max-age=${maxAge}; SameSite=Lax${secure}`;
-				}
-			}
-
-			function setTheme(theme: string) {
-				if (theme === "system") {
-					setCookie("theme", "");
-					root.classList.remove("light", "dark");
-					if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-						root.classList.add("dark");
-					}
-				} else {
-					setCookie("theme", theme);
-					root.classList.remove("light", "dark");
-					root.classList.add(theme);
-				}
-				updateActiveBtn(theme);
-			}
-
-			function updateActiveBtn(theme: string) {
-				themeBtns.forEach((btn) => {
-					btn.classList.toggle("active", btn.dataset.theme === theme);
-				});
-			}
-
-			function getStoredTheme(): string {
-				const match = document.cookie.match(THEME_REGEX);
-				return match ? match[1] : "system";
-			}
-
-			// Initialize
-			const storedTheme = getStoredTheme();
-			setTheme(storedTheme);
-
-			themeBtns.forEach((btn) => {
-				btn.addEventListener("click", () => {
-					setTheme(btn.dataset.theme || "system");
-				});
-			});
-
-			// Listen for system preference changes
-			window
-				.matchMedia("(prefers-color-scheme: dark)")
-				.addEventListener("change", (e) => {
-					if (getStoredTheme() === "system") {
-						root.classList.toggle("dark", e.matches);
-					}
-				});
-		</script>
 
 		<style is:global>
 			/*
@@ -491,36 +339,6 @@ const isLoggedIn = !!Astro.locals.user;
 					--shadow-btn-active: 0 1px 2px rgba(0, 0, 0, 0.05);
 				}
 
-				/* Dark mode via system preference (when no explicit class) */
-				@media (prefers-color-scheme: dark) {
-					:root:not(.light) {
-						--color-bg: #0d0d0d;
-						--color-bg-subtle: #141414;
-						--color-text: #ededed;
-						--color-text-secondary: #a0a0a0;
-						--color-muted: #6b6b6b;
-						--color-border: #2a2a2a;
-						--color-border-subtle: #1f1f1f;
-						--color-surface: #181818;
-						--color-accent: #4d9fff;
-						--color-accent-hover: #6eb0ff;
-					}
-				}
-
-				/* Explicit dark mode */
-				:root.dark {
-					--color-bg: #0d0d0d;
-					--color-bg-subtle: #141414;
-					--color-text: #ededed;
-					--color-text-secondary: #a0a0a0;
-					--color-muted: #6b6b6b;
-					--color-border: #2a2a2a;
-					--color-border-subtle: #1f1f1f;
-					--color-surface: #181818;
-					--color-accent: #4d9fff;
-					--color-accent-hover: #6eb0ff;
-				}
-
 				html {
 					scroll-behavior: smooth;
 				}
@@ -558,7 +376,7 @@ const isLoggedIn = !!Astro.locals.user;
 				h4,
 				h5,
 				h6 {
-					font-family: var(--font-sans);
+					font-family: var(--font-display, var(--font-sans));
 					line-height: var(--leading-tight);
 					font-weight: 600;
 					letter-spacing: var(--tracking-snug);
@@ -570,21 +388,19 @@ const isLoggedIn = !!Astro.locals.user;
 				}
 
 				::selection {
-					background: var(--color-accent);
+					background: var(--color-primary);
 					color: white;
 				}
 			}
 		</style>
 
 		<style>
+			/* ── Header ─────────────────────────────────────────────── */
 			.site-header {
 				position: sticky;
 				top: 0;
 				z-index: 100;
-				background: color-mix(in srgb, var(--color-bg) 65%, transparent);
-				backdrop-filter: blur(12px);
-				-webkit-backdrop-filter: blur(12px);
-				border-bottom: 1px solid var(--color-border-subtle);
+				background: var(--color-primary);
 			}
 
 			.nav {
@@ -599,21 +415,22 @@ const isLoggedIn = !!Astro.locals.user;
 
 			.site-title {
 				font-size: var(--font-size-lg);
-				font-weight: 600;
-				color: var(--color-text);
+				font-weight: 700;
+				color: #ffffff;
 				text-decoration: none;
 				letter-spacing: var(--tracking-snug);
+				font-family: var(--font-display, var(--font-sans));
 			}
 
 			.site-title:hover {
-				color: var(--color-accent);
+				color: rgba(255, 255, 255, 0.85);
 			}
 
 			.site-logo-img {
-				height: 48px;
+				height: 56px;
 				width: auto;
 				display: block;
-				margin: -8px 0;
+				margin: -12px 0;
 			}
 
 			.nav-right {
@@ -630,30 +447,35 @@ const isLoggedIn = !!Astro.locals.user;
 
 			.nav-links a {
 				text-decoration: none;
-				color: var(--color-text);
+				color: #ffffff;
+				font-weight: 500;
 				transition: color var(--transition-fast);
 			}
 
 			.nav-links a:hover {
-				color: var(--color-accent);
+				color: rgba(255, 255, 255, 0.8);
 			}
 
 			.nav-admin {
 				font-size: var(--font-size-sm);
-				color: var(--color-text-secondary);
+				color: rgba(255, 255, 255, 0.75);
 				text-decoration: none;
-				transition: color var(--transition-fast);
+				background: rgba(255, 255, 255, 0.15);
+				padding: var(--spacing-1) var(--spacing-3);
+				border-radius: var(--radius);
+				transition: background var(--transition-fast);
 			}
 
 			.nav-admin:hover {
-				color: var(--color-text);
+				background: rgba(255, 255, 255, 0.25);
+				color: #ffffff;
 			}
 
 			/* Search styling */
 			.site-search {
 				position: relative;
 				width: var(--search-input-width);
-				--emdash-search-border-focus: var(--color-accent);
+				--emdash-search-border-focus: rgba(255, 255, 255, 0.8);
 			}
 
 			:global(.site-search-input) {
@@ -661,24 +483,26 @@ const isLoggedIn = !!Astro.locals.user;
 				padding: var(--spacing-2) var(--spacing-3);
 				font-family: var(--font-sans);
 				font-size: var(--font-size-sm);
-				border: 1px solid var(--color-border);
+				border: 1px solid rgba(255, 255, 255, 0.4);
 				border-radius: var(--radius);
-				background: var(--color-bg);
-				color: var(--color-text);
+				background: rgba(255, 255, 255, 0.15);
+				color: #ffffff;
 				transition:
 					border-color var(--transition-fast),
+					background var(--transition-fast),
 					box-shadow var(--transition-fast);
 			}
 
 			:global(.site-search-input)::placeholder {
-				color: var(--color-muted);
+				color: rgba(255, 255, 255, 0.65);
 			}
 
 			:global(.site-search-input):focus,
 			:global(.site-search-input):focus-visible {
 				outline: none;
-				border-color: var(--color-accent) !important;
-				box-shadow: 0 0 0 3px var(--color-accent-ring);
+				background: rgba(255, 255, 255, 0.25);
+				border-color: rgba(255, 255, 255, 0.8) !important;
+				box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
 			}
 
 			:global(.site-search-results) {
@@ -756,10 +580,9 @@ const isLoggedIn = !!Astro.locals.user;
 				min-height: calc(100vh - var(--nav-height) - 300px);
 			}
 
-			/* Footer */
+			/* ── Footer ─────────────────────────────────────────────── */
 			.site-footer {
-				background: var(--color-bg-subtle);
-				border-top: 1px solid var(--color-border-subtle);
+				background: var(--color-primary-dark);
 			}
 
 			.footer-inner {
@@ -781,21 +604,23 @@ const isLoggedIn = !!Astro.locals.user;
 
 			.footer-logo {
 				font-size: var(--font-size-lg);
-				font-weight: 600;
-				color: var(--color-text);
+				font-weight: 700;
+				color: #ffffff;
 				text-decoration: none;
 				letter-spacing: var(--tracking-snug);
+				font-family: var(--font-display, var(--font-sans));
 			}
 
 			.footer-logo-img {
-				height: 24px;
+				height: 32px;
 				width: auto;
+				filter: brightness(0) invert(1);
 			}
 
 			.footer-tagline {
 				margin-top: var(--spacing-3);
 				font-size: var(--font-size-sm);
-				color: var(--color-muted);
+				color: rgba(255, 255, 255, 0.7);
 				line-height: var(--leading-relaxed);
 			}
 
@@ -805,10 +630,10 @@ const isLoggedIn = !!Astro.locals.user;
 
 			.footer-heading {
 				font-size: var(--font-size-xs);
-				font-weight: 500;
+				font-weight: 600;
 				text-transform: uppercase;
 				letter-spacing: var(--tracking-wider);
-				color: var(--color-muted);
+				color: rgba(255, 255, 255, 0.55);
 				margin-bottom: var(--spacing-4);
 			}
 
@@ -821,14 +646,14 @@ const isLoggedIn = !!Astro.locals.user;
 			}
 
 			.footer-links a {
-				color: var(--color-text-secondary);
+				color: rgba(255, 255, 255, 0.8);
 				text-decoration: none;
 				font-size: var(--font-size-sm);
 				transition: color var(--transition-fast);
 			}
 
 			.footer-links a:hover {
-				color: var(--color-text);
+				color: #ffffff;
 			}
 
 			.footer-widgets-section :global(.widget-area) {
@@ -836,20 +661,20 @@ const isLoggedIn = !!Astro.locals.user;
 			}
 
 			.footer-widgets-section :global(.widget) {
-				color: var(--color-text-secondary);
+				color: rgba(255, 255, 255, 0.8);
 			}
 
 			.footer-widgets-section :global(.widget__title) {
 				font-size: var(--font-size-xs);
-				font-weight: 500;
+				font-weight: 600;
 				text-transform: uppercase;
 				letter-spacing: var(--tracking-wider);
-				color: var(--color-muted);
+				color: rgba(255, 255, 255, 0.55);
 				margin-bottom: var(--spacing-4);
 			}
 
 			.footer-widgets-section :global(.widget__content) {
-				color: var(--color-text-secondary);
+				color: rgba(255, 255, 255, 0.8);
 				font-size: var(--font-size-sm);
 				line-height: var(--leading-relaxed);
 			}
@@ -859,54 +684,16 @@ const isLoggedIn = !!Astro.locals.user;
 				justify-content: space-between;
 				align-items: center;
 				padding-top: var(--spacing-6);
-				border-top: 1px solid var(--color-border);
+				border-top: 1px solid rgba(255, 255, 255, 0.15);
 			}
 
 			.footer-copyright {
 				font-size: var(--font-size-sm);
-				color: var(--color-muted);
+				color: rgba(255, 255, 255, 0.5);
 			}
 
 			.footer-copyright a {
-				color: var(--color-text-secondary);
-			}
-
-			/* Theme switcher */
-			.theme-switcher {
-				display: flex;
-				gap: var(--spacing-1);
-				padding: var(--spacing-1);
-				background: var(--color-surface);
-				border-radius: var(--radius);
-			}
-
-			.theme-btn {
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				width: 32px;
-				height: 28px;
-				background: transparent;
-				border: none;
-				color: var(--color-muted);
-				border-radius: var(--radius);
-				cursor: pointer;
-				transition: all var(--transition-fast);
-			}
-
-			.theme-btn:hover {
-				color: var(--color-text-secondary);
-			}
-
-			.theme-btn.active {
-				background: var(--color-bg);
-				color: var(--color-text);
-				box-shadow: var(--shadow-btn-active);
-			}
-
-			.theme-btn svg {
-				width: 16px;
-				height: 16px;
+				color: rgba(255, 255, 255, 0.7);
 			}
 
 			@media (max-width: 900px) {
@@ -924,7 +711,6 @@ const isLoggedIn = !!Astro.locals.user;
 			@media (max-width: 640px) {
 				.site-header {
 					position: relative;
-					border-bottom: none;
 				}
 
 				.nav {
@@ -986,11 +772,6 @@ const isLoggedIn = !!Astro.locals.user;
 					flex-direction: column;
 					gap: var(--spacing-4);
 					text-align: center;
-				}
-
-				.footer-controls {
-					flex-wrap: wrap;
-					justify-content: center;
 				}
 			}
 		</style>

@@ -25,7 +25,7 @@ const {
 } = Astro.props;
 
 const formattedDate = date
-	? date.toLocaleDateString("en-US", {
+	? date.toLocaleDateString("nl-NL", {
 			year: "numeric",
 			month: "short",
 			day: "numeric",
@@ -110,6 +110,11 @@ const formattedDate = date
 	.post-card {
 		display: flex;
 		flex-direction: column;
+		background: #ffffff;
+		border-radius: var(--radius-lg);
+		border-top: 3px solid var(--color-primary);
+		box-shadow: var(--shadow-card);
+		overflow: hidden;
 	}
 
 	.card-link {
@@ -121,9 +126,7 @@ const formattedDate = date
 	.card-image {
 		aspect-ratio: 16 / 10;
 		overflow: hidden;
-		border-radius: var(--radius-lg);
 		background: var(--color-surface);
-		margin-bottom: var(--spacing-4);
 	}
 
 	.card-image img {
@@ -139,13 +142,12 @@ const formattedDate = date
 
 	.card-placeholder {
 		aspect-ratio: 16 / 10;
-		border-radius: var(--radius-lg);
-		background: var(--color-surface);
-		margin-bottom: var(--spacing-4);
+		background: var(--color-primary-tint);
 	}
 
 	.card-body {
 		flex: 1;
+		padding: var(--spacing-5) var(--spacing-5) var(--spacing-4);
 	}
 
 	.card-meta {
@@ -181,7 +183,7 @@ const formattedDate = date
 	}
 
 	.card-link:hover .card-title {
-		color: var(--color-accent);
+		color: var(--color-primary);
 	}
 
 	.card-excerpt {
@@ -198,25 +200,24 @@ const formattedDate = date
 		display: flex;
 		flex-wrap: wrap;
 		gap: var(--spacing-2);
-		margin-top: var(--spacing-3);
+		padding: 0 var(--spacing-5) var(--spacing-5);
 	}
 
 	.card-tag {
 		display: inline-block;
-		padding: var(--tag-padding-y) var(--spacing-2);
+		padding: var(--tag-padding-y) var(--spacing-3);
 		font-size: var(--font-size-xs);
-		color: var(--color-text-secondary);
-		background: var(--color-surface);
+		font-weight: 600;
+		color: #ffffff;
+		background: var(--color-primary);
 		border-radius: var(--radius);
 		text-decoration: none;
-		transition:
-			color var(--transition-fast),
-			background var(--transition-fast);
+		transition: background var(--transition-fast);
 	}
 
 	.card-tag:hover {
-		color: var(--color-text);
-		background: var(--color-border);
+		color: #ffffff;
+		background: var(--color-primary-hover);
 	}
 
 	/* Byline styles */

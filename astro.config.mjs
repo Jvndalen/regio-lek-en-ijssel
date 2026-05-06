@@ -29,14 +29,22 @@ export default defineConfig({
 			}),
 			plugins: [resendPlugin()],
 			siteUrl: process.env.BASE_URL,
+			mcp: true,
 		}),
 	],
 	fonts: [
 		{
 			provider: fontProviders.google(),
-			name: "Inter",
+			name: "Nunito",
+			cssVariable: "--font-display",
+			weights: [400, 600, 700, 800],
+			fallbacks: ["sans-serif"],
+		},
+		{
+			provider: fontProviders.google(),
+			name: "Source Sans 3",
 			cssVariable: "--font-sans",
-			weights: [400, 500, 600, 700],
+			weights: [400, 500, 600],
 			fallbacks: ["sans-serif"],
 		},
 		{

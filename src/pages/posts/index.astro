@@ -27,17 +27,17 @@ const postsWithTags = posts.map((post) => ({
 }));
 
 const formatDate = (date: Date) =>
-	date.toLocaleDateString("en-US", {
+	date.toLocaleDateString("nl-NL", {
 		year: "numeric",
 		month: "long",
 		day: "numeric",
 	});
 ---
 
-<Base title="All Posts" description="Browse all blog posts">
+<Base title="Alle berichten" description="Bekijk alle berichten van Regio Lek-en-IJsselstreek">
 	<div class="posts-page">
 		<header class="page-header">
-			<h1 class="page-title">All Posts</h1>
+			<h1 class="page-title">Alle berichten</h1>
 			<p class="page-description">
 				{posts.length}
 				{posts.length === 1 ? "article" : "articles"}
@@ -117,13 +117,16 @@ const formatDate = (date: Date) =>
 
 	.page-header {
 		margin-bottom: var(--spacing-12);
+		padding-bottom: var(--spacing-6);
+		border-bottom: 3px solid var(--color-primary);
 	}
 
 	.page-title {
 		font-size: var(--font-size-4xl);
-		font-weight: 700;
+		font-weight: 800;
 		letter-spacing: var(--tracking-tight);
 		margin-bottom: var(--spacing-2);
+		color: var(--color-primary);
 	}
 
 	.page-description {
@@ -222,7 +225,7 @@ const formatDate = (date: Date) =>
 	}
 
 	.post-link:hover .post-title {
-		color: var(--color-accent);
+		color: var(--color-primary);
 	}
 
 	.post-excerpt {
@@ -240,20 +243,19 @@ const formatDate = (date: Date) =>
 
 	.post-tag {
 		display: inline-block;
-		padding: var(--tag-padding-y) var(--spacing-2);
+		padding: var(--tag-padding-y) var(--spacing-3);
 		font-size: var(--font-size-xs);
-		color: var(--color-text-secondary);
-		background: var(--color-surface);
+		font-weight: 600;
+		color: #ffffff;
+		background: var(--color-primary);
 		border-radius: var(--radius);
 		text-decoration: none;
-		transition:
-			color var(--transition-fast),
-			background var(--transition-fast);
+		transition: background var(--transition-fast);
 	}
 
 	.post-tag:hover {
-		color: var(--color-text);
-		background: var(--color-border);
+		color: #ffffff;
+		background: var(--color-primary-hover);
 	}
 
 	@media (max-width: 600px) {
