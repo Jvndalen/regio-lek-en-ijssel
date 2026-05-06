@@ -7,6 +7,8 @@ WORKDIR /app
 
 # Copy only dependency files first (better caching)
 COPY package.json pnpm-lock.yaml ./
+# Copy workspace plugins so pnpm can resolve local packages
+COPY plugins ./plugins
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
