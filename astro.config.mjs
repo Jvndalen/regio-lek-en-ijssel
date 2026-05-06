@@ -4,6 +4,7 @@ import { auditLogPlugin } from "@emdash-cms/plugin-audit-log";
 import { defineConfig, fontProviders, memoryCache } from "astro/config";
 import emdash, { local } from "emdash/astro";
 import { sqlite, postgres } from "emdash/db";
+import { resendPlugin } from "@regio-lek-en-ijssel/plugin-resend";
 
 const database = process.env.DATABASE_URL
   ? postgres({ connectionString: process.env.DATABASE_URL })
@@ -26,8 +27,8 @@ export default defineConfig({
 				directory: "./uploads",
 				baseUrl: "/_emdash/api/media/file",
 			}),
-      plugins: [auditLogPlugin()],
-      siteUrl: process.env.BASE_URL
+			plugins: [resendPlugin()],
+			siteUrl: process.env.BASE_URL,
 		}),
 	],
 	fonts: [
@@ -46,10 +47,10 @@ export default defineConfig({
 			fallbacks: ["monospace"],
 		},
 	],
-  devToolbar: { enabled: false },
-  experimental: {
-      cache: {
-        provider: memoryCache(),
-      },
-    },
+	devToolbar: { enabled: false },
+	experimental: {
+		cache: {
+			provider: memoryCache(),
+		},
+	},
 });
