@@ -48,4 +48,6 @@ jobs:
       - name: Deploy to Coolify
         run: |
           curl --request POST "${{ secrets.COOLIFY_WEBHOOK }}" \
-            --header "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}"
+            --header "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
+            --header "Content-Type: application/json" \
+            --header "Accept: application/json" \
