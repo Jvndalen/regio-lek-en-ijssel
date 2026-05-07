@@ -3,7 +3,21 @@
     "allow": [
       "WebFetch(domain:www.regiolekenijssel.nl)",
       "WebSearch",
-      "Bash(npx astro *)"
+      "Bash(npx astro *)",
+      "Bash(pnpm list *)",
+      "Bash(node -e \"const p = require\\('./node_modules/@astrojs/node/package.json'\\); console.log\\(JSON.stringify\\(p.peerDependencies, null, 2\\)\\)\")",
+      "Bash(node -e \"const p = require\\('./node_modules/astro/package.json'\\); console.log\\(p.version\\)\")",
+      "Bash(npm show *)",
+      "Bash(node -e \"const v=require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\); const arr=JSON.parse\\(v\\); console.log\\(arr.filter\\(x=>x.startsWith\\('6.'\\)\\).slice\\(-5\\).join\\('\\\\n'\\)\\)\")",
+      "Bash(node -e \"const p=JSON.parse\\(require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\)\\); console.log\\('exports:', Object.keys\\(p.exports||{}\\).filter\\(k=>k.includes\\('adapter'\\)||k.includes\\('logger'\\)\\)\\)\")",
+      "Bash(node -e \"const p=JSON.parse\\(require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\)\\); console.log\\(p.description, '\\\\nchangelog:', p.changelog\\)\")",
+      "Bash(npm pack *)",
+      "Bash(pnpm update *)",
+      "Bash(pnpm install *)",
+      "Bash(pnpm approve-builds *)",
+      "Bash(pnpm rebuild *)",
+      "Bash(pnpm build *)",
+      "Bash(timeout 5 pnpm start)"
     ]
   }
 }
