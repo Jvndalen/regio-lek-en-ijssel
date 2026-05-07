@@ -1,0 +1,671 @@
+---
+import { getEmDashEntry, getEmDashCollection, getEntryTerms, getTermsForEntries, getSeoMeta } from "emdash";
+import { PortableText } from "emdash/ui";
+import Base from "../../layouts/Base.astro";
+
+const slug = Astro.params.slug;
+
+if (!slug) {
+	return Astro.redirect("/404");
+}
+
+const { entry: vacature, cacheHint } = await getEmDashEntry("vacatures", slug);
+
+if (!vacature) {
+	return Astro.redirect("/404");
+}
+
+Astro.cache.set(cacheHint);
+
+const [vacatureTypes, { entries: allVacatures, cacheHint: allCacheHint }] = await Promise.all([
+	getEntryTerms("vacatures", vacature.data.id, "vacature_type"),
+	getEmDashCollection("vacatures", { orderBy: { created_at: "desc" }, limit: 10 }),
+]);
+
+Astro.cache.set(allCacheHint);
+
+const vacatureType = vacatureTypes[0] ?? null;
+
+const relatedVacatures = allVacatures
+	.filter((v) => v.id !== vacature.id)
+	.slice(0, 3);
+
+const relatedVacatureTypes = relatedVacatures.length > 0
+	? await getTermsForEntries("vacatures", relatedVacatures.map((v) => v.data.id), "vacature_type")
+	: new Map();
+
+const seo = getSeoMeta(vacature, {
+	siteTitle: "Scouting Regio Lek- en IJsselstreek",
+	siteUrl: Astro.url.origin,
+	path: `/vacatures/${slug}`,
+});
+
+const typeClassMap: Record<string, string> = {
+	"bestuur": "type-tag--bestuur",
+	"training": "type-tag--training",
+	"kamp": "type-tag--kamp",
+};
+---
+
+<Base
+	title={seo.title}
+	pageTitle={seo.ogTitle}
+	description={seo.description}
+	canonical={seo.canonical}
+	robots={seo.robots}
+>
+	<!-- ── Page hero ──────────────────────────────────────────────── -->
+	<section class="page-hero">
+		<div class="hero-blobs" aria-hidden="true">
+			<svg viewBox="0 0 1440 460" preserveAspectRatio="none">
+				<path
+					d="M0,0 L1440,0 L1440,340 C1180,440 720,340 480,400 C240,460 120,400 0,440 Z"
+					fill="var(--color-primary)"/>
+			</svg>
+		</div>
+		<div class="hero-container">
+			<nav class="breadcrumb" aria-label="Broodkruimels">
+				<a href="/">Home</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<a href="/vacatures">Vacatures</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<span aria-current="page">{vacature.data.role}</span>
+			</nav>
+
+			<div class="hero-text">
+				{vacatureType && (
+					<span class={`hero-tag ${typeClassMap[vacatureType.slug] ?? "type-tag--bestuur"}`}>
+						{vacatureType.label}
+					</span>
+				)}
+				<h1>{vacature.data.role}</h1>
+				<div class="hero-meta">
+					{vacature.data.organization && (
+						<span class="hero-meta-item">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg>
+							<span class="sr-only">Organisatie:</span>
+							{vacature.data.organization}
+						</span>
+					)}
+					{vacature.data.commitment && (
+						<span class="hero-meta-item">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+							<span class="sr-only">Tijdinvestering:</span>
+							{vacature.data.commitment}
+						</span>
+					)}
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- ── Vacature detail ────────────────────────────────────────── -->
+	<section class="detail-section">
+		<div class="container">
+			<div class="detail-grid">
+
+				<!-- Info card -->
+				<aside class="info-card">
+					<h2 class="info-title">Details</h2>
+					<dl class="info-list">
+						{vacature.data.organization && (
+							<>
+								<dt>
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg>
+									Organisatie
+								</dt>
+								<dd>{vacature.data.organization}</dd>
+							</>
+						)}
+						{vacature.data.commitment && (
+							<>
+								<dt>
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+									Tijdinvestering
+								</dt>
+								<dd>{vacature.data.commitment}</dd>
+							</>
+						)}
+						{vacatureType && (
+							<>
+								<dt>
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2 21c0-3.5 3-6 7-6s7 2.5 7 6M17 11a3 3 0 0 0 0-6M22 21c0-3-2-5-5-5"/></svg>
+									Type vacature
+								</dt>
+								<dd>
+									<span class={`type-tag ${typeClassMap[vacatureType.slug] ?? "type-tag--bestuur"}`}>
+										{vacatureType.label}
+									</span>
+								</dd>
+							</>
+						)}
+					</dl>
+
+					<a href="/vacatures" class="back-link">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+						Terug naar vacatures
+					</a>
+				</aside>
+
+				<!-- Main content area -->
+				<div class="detail-main">
+					{vacature.data.description && (
+						<p class="vacature-lead">{vacature.data.description}</p>
+					)}
+					{vacature.data.content && vacature.data.content.length > 0 ? (
+						<div class="vacature-content" {...vacature.edit.content}>
+							<PortableText value={vacature.data.content} />
+						</div>
+					) : !vacature.data.description && (
+						<div class="detail-empty">
+							<div class="de-icon" aria-hidden="true">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg>
+							</div>
+							<p>Meer informatie over deze vacature volgt binnenkort.</p>
+							<p class="de-sub">Neem contact op met {vacature.data.organization ?? "het regiobestuur"} voor vragen.</p>
+						</div>
+					)}
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- ── Related vacatures ──────────────────────────────────────── -->
+	{relatedVacatures.length > 0 && (
+		<section class="related-section">
+			<div class="container">
+				<div class="section-head">
+					<p class="eyebrow">Vacatures</p>
+					<h2 class="section-title">Meer open functies</h2>
+				</div>
+				<div class="vacature-grid">
+					{relatedVacatures.map((v) => {
+						const vt = (relatedVacatureTypes.get(v.data.id) ?? [])[0] ?? null;
+						return (
+							<a class="vacature-card" href={`/vacatures/${v.id}`}>
+								<div class="vacature-header">
+									{vt && (
+										<span class={`type-tag ${typeClassMap[vt.slug] ?? "type-tag--bestuur"}`}>
+											{vt.label}
+										</span>
+									)}
+								</div>
+								<h3>{v.data.role}</h3>
+								<div class="vacature-meta">
+									{v.data.organization && (
+										<span>
+											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg>
+											{v.data.organization}
+										</span>
+									)}
+									{v.data.commitment && (
+										<span>
+											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+											{v.data.commitment}
+										</span>
+									)}
+								</div>
+								{v.data.description && (
+									<p class="vacature-desc">{v.data.description}</p>
+								)}
+							</a>
+						);
+					})}
+				</div>
+				<div class="related-footer">
+					<a href="/vacatures" class="btn btn-outline">
+						Alle vacatures
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+					</a>
+				</div>
+			</div>
+		</section>
+	)}
+</Base>
+
+<style>
+	/* ── Page hero ───────────────────────────────────────────────── */
+	.page-hero {
+		position: relative;
+		background: #A8D58A;
+		overflow: hidden;
+		isolation: isolate;
+	}
+
+	.hero-blobs {
+		position: absolute;
+		inset: 0;
+		z-index: 0;
+	}
+
+	.hero-blobs svg { width: 100%; height: 100%; display: block; }
+
+	.hero-container {
+		position: relative;
+		z-index: 1;
+		max-width: 1240px;
+		margin: 0 auto;
+		padding: 56px 32px 80px;
+	}
+
+	.breadcrumb {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 28px;
+		font-size: 13px;
+		flex-wrap: wrap;
+	}
+
+	.breadcrumb a {
+		color: rgba(255,255,255,.85);
+		text-decoration: none;
+		font-weight: 600;
+	}
+
+	.breadcrumb a:hover { color: #fff; }
+	.breadcrumb .sep { color: rgba(255,255,255,.5); }
+	.breadcrumb span:last-child { color: #fff; font-weight: 700; }
+
+	.hero-text { flex: 1; }
+
+	.hero-tag {
+		display: inline-block;
+		font-size: 11px;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: .06em;
+		padding: 4px 10px;
+		border-radius: 6px;
+		margin-bottom: 12px;
+		margin-right: 6px;
+	}
+
+	.page-hero h1 {
+		font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+		font-weight: 900;
+		color: #fff;
+		letter-spacing: -.02em;
+		margin: 0 0 18px;
+		line-height: 1.1;
+	}
+
+	.hero-meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 16px;
+	}
+
+	.hero-meta-item {
+		display: inline-flex;
+		align-items: center;
+		gap: 7px;
+		font-size: 15px;
+		color: rgba(255,255,255,.92);
+		font-weight: 500;
+	}
+
+	/* ── Type tags ───────────────────────────────────────────────── */
+	.type-tag {
+		display: inline-block;
+		font-size: 11px;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: .06em;
+		padding: 3px 8px;
+		border-radius: 6px;
+	}
+
+	/* Hero variant (on green bg) */
+	.hero-tag.type-tag--bestuur  { background: rgba(255,255,255,.22); color: #fff; }
+	.hero-tag.type-tag--training { background: rgba(255,255,255,.22); color: #fff; }
+	.hero-tag.type-tag--kamp     { background: rgba(255,255,255,.22); color: #fff; }
+
+	/* Body variant */
+	.type-tag--bestuur  { background: #E6EAF2; color: var(--color-navy); }
+	.type-tag--training { background: #DDF1FA; color: var(--color-accent-hover); }
+	.type-tag--kamp     { background: #EAF6E2; color: var(--color-primary-hover); }
+
+	/* ── Detail section ──────────────────────────────────────────── */
+	.detail-section {
+		padding: 56px 0 96px;
+	}
+
+	.container {
+		max-width: 1240px;
+		margin: 0 auto;
+		padding: 0 32px;
+	}
+
+	.detail-grid {
+		display: grid;
+		grid-template-columns: 320px 1fr;
+		gap: 40px;
+		align-items: start;
+	}
+
+	/* ── Info card ───────────────────────────────────────────────── */
+	.info-card {
+		background: #fff;
+		border-radius: 22px;
+		padding: 32px;
+		box-shadow: var(--shadow-card);
+		border: 1px solid var(--color-border);
+		position: sticky;
+		top: 24px;
+	}
+
+	.info-title {
+		font-size: 14px;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: .08em;
+		color: var(--color-muted);
+		margin: 0 0 20px;
+	}
+
+	.info-list {
+		display: grid;
+		gap: 0;
+		margin: 0 0 28px;
+	}
+
+	.info-list dt {
+		display: flex;
+		align-items: center;
+		gap: 7px;
+		font-size: 12px;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: .06em;
+		color: var(--color-muted);
+		margin-top: 18px;
+		margin-bottom: 4px;
+	}
+
+	.info-list dt:first-child { margin-top: 0; }
+
+	.info-list dd {
+		font-size: 15px;
+		font-weight: 600;
+		color: var(--color-text);
+		margin: 0;
+		line-height: 1.4;
+	}
+
+	.back-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		font-size: 13px;
+		font-weight: 700;
+		color: var(--color-muted);
+		text-decoration: none;
+		transition: color var(--transition-fast);
+	}
+
+	.back-link:hover { color: var(--color-text); }
+
+	/* ── Detail main ─────────────────────────────────────────────── */
+	.detail-main {
+		min-height: 240px;
+	}
+
+	.vacature-lead {
+		font-size: 18px;
+		font-weight: 500;
+		line-height: 1.65;
+		color: var(--color-muted);
+		margin: 0 0 32px;
+		padding-bottom: 32px;
+		border-bottom: 1px solid var(--color-border);
+	}
+
+	.detail-empty {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 8px;
+		padding: 40px;
+		background: var(--color-bg-subtle);
+		border-radius: 22px;
+		border: 1px dashed var(--color-border);
+		color: var(--color-muted);
+	}
+
+	.de-icon {
+		color: var(--color-border);
+		margin-bottom: 8px;
+	}
+
+	.detail-empty p {
+		font-size: 16px;
+		font-weight: 600;
+		margin: 0;
+		color: var(--color-text-secondary, var(--color-muted));
+	}
+
+	.de-sub {
+		font-size: 14px !important;
+		font-weight: 400 !important;
+	}
+
+	/* ── Vacature content (PortableText) ─────────────────────────── */
+	.vacature-content {
+		font-size: 17px;
+		line-height: 1.7;
+		color: var(--color-text);
+	}
+
+	.vacature-content :global(p) {
+		margin-bottom: 1.4em;
+	}
+
+	.vacature-content :global(h2) {
+		font-size: clamp(1.25rem, 2vw, 1.6rem);
+		font-weight: 900;
+		color: var(--color-primary);
+		margin-top: 2.2em;
+		margin-bottom: 0.6em;
+		letter-spacing: -.015em;
+		scroll-margin-top: 24px;
+	}
+
+	.vacature-content :global(h3) {
+		font-size: 1.15rem;
+		font-weight: 800;
+		color: var(--color-primary-hover);
+		margin-top: 1.8em;
+		margin-bottom: 0.4em;
+		scroll-margin-top: 24px;
+	}
+
+	.vacature-content :global(ul),
+	.vacature-content :global(ol) {
+		margin-bottom: 1.4em;
+		padding-left: 1.5em;
+	}
+
+	.vacature-content :global(li) {
+		margin-bottom: 0.4em;
+	}
+
+	.vacature-content :global(blockquote) {
+		margin: 1.8em 0;
+		padding: 16px 24px;
+		border-left: 3px solid var(--color-primary);
+		background: var(--color-bg-subtle);
+		border-radius: 0 12px 12px 0;
+		color: var(--color-muted);
+		font-style: italic;
+	}
+
+	.vacature-content :global(a) {
+		color: var(--color-accent);
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	.vacature-content :global(strong) {
+		font-weight: 700;
+		color: var(--color-text);
+	}
+
+	/* ── Related vacatures ───────────────────────────────────────── */
+	.related-section {
+		background: var(--color-bg-subtle);
+		padding: 72px 0 80px;
+	}
+
+	.section-head {
+		margin-bottom: 32px;
+	}
+
+	.eyebrow {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 12px;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: .08em;
+		color: var(--color-primary-hover);
+		margin: 0 0 8px;
+	}
+
+	.eyebrow::before {
+		content: "";
+		width: 24px;
+		height: 2px;
+		background: currentColor;
+		display: inline-block;
+	}
+
+	.section-title {
+		font-size: clamp(1.4rem, 2.2vw, 1.9rem);
+		font-weight: 900;
+		letter-spacing: -.015em;
+		margin: 0;
+		color: var(--color-text);
+	}
+
+	.vacature-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 20px;
+	}
+
+	.vacature-card {
+		background: #fff;
+		border-radius: 22px;
+		padding: 24px;
+		box-shadow: var(--shadow-card);
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		transition: transform var(--transition-base), box-shadow var(--transition-base);
+		text-decoration: none;
+		color: var(--color-text);
+		border: 1px solid var(--color-border);
+	}
+
+	.vacature-card:hover {
+		transform: translateY(-2px);
+		box-shadow: var(--shadow-card-hover);
+		text-decoration: none;
+		color: var(--color-text);
+	}
+
+	.vacature-header {
+		min-height: 22px;
+	}
+
+	.vacature-card h3 {
+		font-size: 16px;
+		font-weight: 800;
+		margin: 0;
+		line-height: 1.25;
+	}
+
+	.vacature-meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
+		font-size: 12px;
+		color: var(--color-muted);
+	}
+
+	.vacature-meta span {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+	}
+
+	.vacature-desc {
+		font-size: 13px;
+		color: var(--color-muted);
+		line-height: 1.55;
+		margin: 0;
+		flex: 1;
+	}
+
+	.related-footer {
+		margin-top: 32px;
+		display: flex;
+		justify-content: center;
+	}
+
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		padding: 12px 24px;
+		border-radius: var(--radius-pill);
+		font-weight: 800;
+		font-size: 13px;
+		text-transform: uppercase;
+		letter-spacing: .06em;
+		border: 2px solid transparent;
+		cursor: pointer;
+		font-family: inherit;
+		text-decoration: none;
+		transition: all var(--transition-base);
+		white-space: nowrap;
+	}
+
+	.btn-outline {
+		background: #fff;
+		color: var(--color-text);
+		border-color: var(--color-border);
+	}
+
+	.btn-outline:hover {
+		border-color: var(--color-text);
+		color: var(--color-text);
+	}
+
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border-width: 0;
+	}
+
+	/* ── Responsive ──────────────────────────────────────────────── */
+	@media (max-width: 1000px) {
+		.detail-grid { grid-template-columns: 1fr; }
+		.info-card { position: static; }
+		.vacature-grid { grid-template-columns: repeat(2, 1fr); }
+	}
+
+	@media (max-width: 680px) {
+		.container { padding: 0 20px; }
+		.hero-container { padding: 40px 20px 60px; }
+		.vacature-grid { grid-template-columns: 1fr; }
+	}
+</style>

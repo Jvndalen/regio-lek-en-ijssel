@@ -2,13 +2,13 @@
 	"$schema": "https://emdashcms.com/seed.schema.json",
 	"version": "1",
 	"meta": {
-		"name": "Blog Starter",
-		"description": "A blog with posts and pages",
-		"author": "EmDash"
+		"name": "Scouting Regio Lek- en IJsselstreek",
+		"description": "Regiosite voor Scouting Regio Lek- en IJsselstreek",
+		"author": "Regio Lek- en IJsselstreek"
 	},
 	"settings": {
-		"title": "My Blog",
-		"tagline": "Thoughts on building for the web"
+		"title": "Scouting Regio Lek- en IJsselstreek",
+		"tagline": "Tussen Lek en IJssel. Land en water, samen scouten."
 	},
 	"collections": [
 		{
@@ -63,6 +63,80 @@
 					"searchable": true
 				}
 			]
+		},
+		{
+			"slug": "events",
+			"label": "Evenementen",
+			"labelSingular": "Evenement",
+			"supports": ["drafts", "revisions"],
+			"fields": [
+				{
+					"slug": "title",
+					"label": "Titel",
+					"type": "string",
+					"required": true,
+					"searchable": true
+				},
+				{
+					"slug": "date",
+					"label": "Datum & tijd",
+					"type": "datetime",
+					"required": true
+				},
+				{
+					"slug": "location",
+					"label": "Locatie",
+					"type": "string"
+				},
+				{
+					"slug": "time_label",
+					"label": "Tijdstip",
+					"type": "string"
+				},
+				{
+					"slug": "content",
+					"label": "Beschrijving",
+					"type": "portableText",
+					"searchable": true
+				}
+			]
+		},
+		{
+			"slug": "vacatures",
+			"label": "Vacatures",
+			"labelSingular": "Vacature",
+			"supports": ["drafts", "revisions", "search", "seo"],
+			"fields": [
+				{
+					"slug": "role",
+					"label": "Functie",
+					"type": "string",
+					"required": true,
+					"searchable": true
+				},
+				{
+					"slug": "organization",
+					"label": "Organisatie",
+					"type": "string"
+				},
+				{
+					"slug": "commitment",
+					"label": "Tijdinvestering",
+					"type": "string"
+				},
+				{
+					"slug": "description",
+					"label": "Korte omschrijving",
+					"type": "text",
+					"searchable": true
+				},
+				{
+					"slug": "content",
+					"label": "Inhoud",
+					"type": "portableText",
+					"searchable": true
+				}
+			]
 		}
 	],
 	"taxonomies": [
@@ -109,6 +183,52 @@
 				{
 					"slug": "creativity",
 					"label": "Creativity"
+				}
+			]
+		},
+		{
+			"name": "groep_type",
+			"label": "Groep type",
+			"labelSingular": "Groep type",
+			"hierarchical": false,
+			"collections": ["events"],
+			"terms": [
+				{
+					"slug": "alle-groepen",
+					"label": "Alle groepen"
+				},
+				{
+					"slug": "vrijwilligers",
+					"label": "Vrijwilligers"
+				},
+				{
+					"slug": "watergroepen",
+					"label": "Watergroepen"
+				},
+				{
+					"slug": "landgroepen",
+					"label": "Landgroepen"
+				}
+			]
+		},
+		{
+			"name": "vacature_type",
+			"label": "Vacature type",
+			"labelSingular": "Vacature type",
+			"hierarchical": false,
+			"collections": ["vacatures"],
+			"terms": [
+				{
+					"slug": "bestuur",
+					"label": "Bestuur & Organisatie"
+				},
+				{
+					"slug": "training",
+					"label": "Training & Opleiding"
+				},
+				{
+					"slug": "kamp",
+					"label": "Kamp & Activiteiten"
 				}
 			]
 		}
@@ -931,6 +1051,217 @@
 							"_key": "k0"
 						}
 					]
+				}
+			}
+		],
+		"events": [
+			{
+				"id": "event-hemelvaartsontmoeting",
+				"slug": "hemelvaartsontmoeting-2026",
+				"status": "published",
+				"data": {
+					"title": "Hemelvaartsontmoeting",
+					"date": "2026-05-14T09:30:00",
+					"location": "Schoonhoven · Buitenterrein",
+					"time_label": "09:30 – 17:00",
+					"content": [
+						{
+							"_type": "block", "_key": "hv-k0", "style": "normal",
+							"children": [{"_type": "span", "_key": "hv-k1", "text": "De jaarlijkse Hemelvaartsontmoeting brengt alle 16 groepen van de regio samen voor een dag vol activiteiten, ontmoetingen en scouting spirit. Een vaste traditie die groepen van land en water verbindt."}]
+						},
+						{
+							"_type": "block", "_key": "hv-k2", "style": "h2",
+							"children": [{"_type": "span", "_key": "hv-k3", "text": "Programma"}]
+						},
+						{
+							"_type": "block", "_key": "hv-k4", "style": "normal",
+							"children": [{"_type": "span", "_key": "hv-k5", "text": "Het programma bestaat uit twee blokken van twee uur, met een gezamenlijke lunch en een feestelijke afsluiting. Elke groep brengt een eigen activiteit of spel mee dat andere deelnemers kunnen beleven."}]
+						},
+						{
+							"_type": "block", "_key": "hv-k6", "style": "h2",
+							"children": [{"_type": "span", "_key": "hv-k7", "text": "Inschrijven"}]
+						},
+						{
+							"_type": "block", "_key": "hv-k8", "style": "normal",
+							"children": [{"_type": "span", "_key": "hv-k9", "text": "Groepen melden zich aan via de groepsleider. Geef het verwachte aantal deelnemers door vóór 1 mei. Kosten zijn €5 per persoon, inclusief lunch. Betaling via de groepsrekening aan het regiobestuur."}]
+						}
+					]
+				},
+				"taxonomies": {
+					"groep_type": ["alle-groepen"]
+				}
+			},
+			{
+				"id": "event-praktijkbegeleiderstraining",
+				"slug": "praktijkbegeleiderstraining-juni-2026",
+				"status": "published",
+				"data": {
+					"title": "Praktijkbegeleiderstraining",
+					"date": "2026-06-06T19:30:00",
+					"location": "Scouting Academy · IJsselstein",
+					"time_label": "19:30 – 22:00",
+					"content": [
+						{
+							"_type": "block", "_key": "pb-k0", "style": "normal",
+							"children": [{"_type": "span", "_key": "pb-k1", "text": "Deze avondtraining richt zich op vrijwilligers die als praktijkbegeleider aan de slag zijn of dit binnenkort willen worden. Je leert hoe je jonge leiding begeleidt tijdens opkomsten en hoe je een veilige leeromgeving creëert."}]
+						},
+						{
+							"_type": "block", "_key": "pb-k2", "style": "h2",
+							"children": [{"_type": "span", "_key": "pb-k3", "text": "Voor wie"}]
+						},
+						{
+							"_type": "block", "_key": "pb-k4", "style": "normal",
+							"children": [{"_type": "span", "_key": "pb-k5", "text": "De training is bedoeld voor ervaren leiding die andere leiding begeleidt of wil begeleiden. Voorkennis: minimaal twee jaar leidingservaring binnen scouting."}]
+						},
+						{
+							"_type": "block", "_key": "pb-k6", "style": "h2",
+							"children": [{"_type": "span", "_key": "pb-k7", "text": "Aanmelden"}]
+						},
+						{
+							"_type": "block", "_key": "pb-k8", "style": "normal",
+							"children": [{"_type": "span", "_key": "pb-k9", "text": "Stuur een mail naar de Scouting Academy via de contactpagina. Vermeld je naam, groep en kort je motivatie. Aanmelden kan tot 30 mei. Deelname is gratis voor leden van de regio."}]
+						}
+					]
+				},
+				"taxonomies": {
+					"groep_type": ["vrijwilligers"]
+				}
+			},
+			{
+				"id": "event-waterspelen",
+				"slug": "regio-waterspelen-2026",
+				"status": "published",
+				"data": {
+					"title": "Regio Waterspelen",
+					"date": "2026-06-21T10:00:00",
+					"location": "Reeuwijkse Plassen",
+					"time_label": "10:00 – 16:00",
+					"content": [
+						{
+							"_type": "block", "_key": "ws-k0", "style": "normal",
+							"children": [{"_type": "span", "_key": "ws-k1", "text": "Elk jaar in juni strijden de watergroepen van de regio om de titel bij de Regio Waterspelen. Spelen, stunts en teamwork op en rond het water — spectaculair voor deelnemers én publiek."}]
+						},
+						{
+							"_type": "block", "_key": "ws-k2", "style": "h2",
+							"children": [{"_type": "span", "_key": "ws-k3", "text": "Onderdelen"}]
+						},
+						{
+							"_type": "block", "_key": "ws-k4", "style": "normal",
+							"children": [{"_type": "span", "_key": "ws-k5", "text": "De waterspelen bestaan uit vijf vaste onderdelen: kanorace, vlotbouwen, navigatie, reddingsoefening en een creatieve opdracht. Elke groep neemt per onderdeel twee teams van vier personen mee."}]
+						},
+						{
+							"_type": "block", "_key": "ws-k6", "style": "h2",
+							"children": [{"_type": "span", "_key": "ws-k7", "text": "Meedoen of toekijken"}]
+						},
+						{
+							"_type": "block", "_key": "ws-k8", "style": "normal",
+							"children": [{"_type": "span", "_key": "ws-k9", "text": "Deelname is voorbehouden aan watergroepen. Landgroepen en andere geïnteresseerden zijn van harte welkom als publiek. Parkeren kan gratis bij het aangrenzende recreatieterrein."}]
+						}
+					]
+				},
+				"taxonomies": {
+					"groep_type": ["watergroepen"]
+				}
+			},
+			{
+				"id": "event-zomerkamp-opbouw",
+				"slug": "zomerkamp-opbouw-landgroepen-2026",
+				"status": "published",
+				"data": {
+					"title": "Zomerkamp opbouw — Landgroepen",
+					"date": "2026-07-05T08:00:00",
+					"location": "Kampterrein Lopikerwaard",
+					"time_label": "Hele dag",
+					"content": [
+						{
+							"_type": "block", "_key": "zk-k0", "style": "normal",
+							"children": [{"_type": "span", "_key": "zk-k1", "text": "De opbouwdag markeert de start van het zomerkamp voor de landgroepen. Alle groepen komen samen om tenten op te zetten, het terrein in te richten en de infrastructuur klaar te maken voor een week vol scouting."}]
+						},
+						{
+							"_type": "block", "_key": "zk-k2", "style": "h2",
+							"children": [{"_type": "span", "_key": "zk-k3", "text": "Wat kun je verwachten?"}]
+						},
+						{
+							"_type": "block", "_key": "zk-k4", "style": "normal",
+							"children": [{"_type": "span", "_key": "zk-k5", "text": "Vroeg beginnen, hard werken en gezelligheid. Elke groep pakt zijn eigen tentzone en helpt daarna mee met de gemeenschappelijke voorzieningen: keuken, vergadertent, EHBO-post en sanitair."}]
+						},
+						{
+							"_type": "block", "_key": "zk-k6", "style": "h2",
+							"children": [{"_type": "span", "_key": "zk-k7", "text": "Wat meenemen?"}]
+						},
+						{
+							"_type": "block", "_key": "zk-k8", "style": "normal",
+							"children": [{"_type": "span", "_key": "zk-k9", "text": "Werkhandschoenen, stevige schoenen en genoeg energie. De regio verzorgt de gezamenlijke lunch. Deelnemers worden verwacht vanaf 08:00 uur; het terrein is beschikbaar vanaf 07:30. Zorg voor eigen vervoer naar het kampterrein."}]
+						}
+					]
+				},
+				"taxonomies": {
+					"groep_type": ["landgroepen"]
+				}
+			}
+		],
+		"vacatures": [
+			{
+				"id": "vacature-bestuurslid-communicatie",
+				"slug": "bestuurslid-communicatie",
+				"status": "published",
+				"data": {
+					"role": "Bestuurslid Communicatie",
+					"organization": "Regiobestuur",
+					"commitment": "4–6 uur per week",
+					"description": "Versterk het regiobestuur en geef richting aan de communicatie naar groepen, ouders en pers.",
+					"content": [
+						{"_type":"block","_key":"bc-k0","style":"normal","children":[{"_type":"span","_key":"bc-k1","text":"Als Bestuurslid Communicatie ben jij het gezicht van de regio naar buiten. Je zorgt dat groepen, ouders en pers tijdig en helder worden geïnformeerd over wat er speelt binnen Scouting Regio Lek- en IJsselstreek."}]},
+						{"_type":"block","_key":"bc-k2","style":"h2","children":[{"_type":"span","_key":"bc-k3","text":"Wat ga je doen?"}]},
+						{"_type":"block","_key":"bc-k4","style":"normal","children":[{"_type":"span","_key":"bc-k5","text":"Je beheert de sociale media kanalen en de regiowebsite, schrijft nieuwsbrieven en persberichten, en bent het aanspreekpunt voor communicatievragen vanuit groepen. Samen met het bestuur zet je de communicatiestrategie uit."}]},
+						{"_type":"block","_key":"bc-k6","style":"h2","children":[{"_type":"span","_key":"bc-k7","text":"Wat vragen wij?"}]},
+						{"_type":"block","_key":"bc-k8","style":"normal","children":[{"_type":"span","_key":"bc-k9","text":"Affiniteit met communicatie en sociale media, enthousiasme voor scouting, en de bereidheid om zo'n 4 tot 6 uur per week beschikbaar te zijn. Ervaring is een pré, maar geen vereiste."}]}
+					]
+				},
+				"taxonomies": {
+					"vacature_type": ["bestuur"]
+				}
+			},
+			{
+				"id": "vacature-trainer-academy",
+				"slug": "trainer-scouting-academy",
+				"status": "published",
+				"data": {
+					"role": "Trainer Scouting Academy",
+					"organization": "Scouting Academy",
+					"commitment": "1 avond per maand",
+					"description": "Begeleid (toekomstige) leiding tijdens trainingsavonden — van basisvaardigheden tot teamleiderschap.",
+					"content": [
+						{"_type":"block","_key":"ta-k0","style":"normal","children":[{"_type":"span","_key":"ta-k1","text":"De Scouting Academy traint vrijwilligers in de regio om betere leiding te worden. Als trainer speel je een cruciale rol in dit proces. Je begeleidt trainingsavonden en helpt deelnemers groeien in hun rol."}]},
+						{"_type":"block","_key":"ta-k2","style":"h2","children":[{"_type":"span","_key":"ta-k3","text":"Wat ga je doen?"}]},
+						{"_type":"block","_key":"ta-k4","style":"normal","children":[{"_type":"span","_key":"ta-k5","text":"Je verzorgt of begeleidt één trainingsavond per maand. De onderwerpen variëren van basisvaardigheden in leidinggeven tot specialistische thema's als veiligheid, groepsdynamiek en programma-ontwikkeling."}]},
+						{"_type":"block","_key":"ta-k6","style":"h2","children":[{"_type":"span","_key":"ta-k7","text":"Wat vragen wij?"}]},
+						{"_type":"block","_key":"ta-k8","style":"normal","children":[{"_type":"span","_key":"ta-k9","text":"Ervaring als scoutingleider of trainer, enthousiasme om kennis over te dragen, en beschikbaarheid voor één avond per maand. Een trainersopleiding is een pré."}]}
+					]
+				},
+				"taxonomies": {
+					"vacature_type": ["training"]
+				}
+			},
+			{
+				"id": "vacature-regiokampbouw",
+				"slug": "vrijwilliger-regiokampbouw",
+				"status": "published",
+				"data": {
+					"role": "Vrijwilliger Regiokampbouw",
+					"organization": "Regiokamp 2026",
+					"commitment": "Projectmatig",
+					"description": "Help mee met de organisatie van het tweejaarlijkse regiokamp. Logistiek, programma of techniek.",
+					"content": [
+						{"_type":"block","_key":"rk-k0","style":"normal","children":[{"_type":"span","_key":"rk-k1","text":"Het Regiokamp 2026 is het tweejaarlijkse hoogtepunt voor alle scoutinggroepen in de regio. Voor de organisatie zoeken we enthousiaste vrijwilligers die mee willen bouwen aan een onvergetelijk kamp."}]},
+						{"_type":"block","_key":"rk-k2","style":"h2","children":[{"_type":"span","_key":"rk-k3","text":"Wat ga je doen?"}]},
+						{"_type":"block","_key":"rk-k4","style":"normal","children":[{"_type":"span","_key":"rk-k5","text":"Afhankelijk van je interesse en capaciteiten kun je bijdragen aan logistiek (materiaallijsten, transport, opbouw), programma (activiteiten bedenken en organiseren) of techniek (stroom, water, communicatie)."}]},
+						{"_type":"block","_key":"rk-k6","style":"h2","children":[{"_type":"span","_key":"rk-k7","text":"Wat vragen wij?"}]},
+						{"_type":"block","_key":"rk-k8","style":"normal","children":[{"_type":"span","_key":"rk-k9","text":"Enthousiasme, praktisch inzicht en de bereidheid om gedurende het project mee te denken en te werken. Deelname aan vergaderingen in de aanloop naar het kamp (vanaf januari 2026)."}]}
+					]
+				},
+				"taxonomies": {
+					"vacature_type": ["kamp"]
 				}
 			}
 		]

@@ -5,69 +5,15 @@
 
 import type { ContentBylineCredit, PortableTextBlock } from "emdash";
 
-export interface ElementorLibrary {
+export interface Evenement {
   id: string;
   slug: string | null;
   status: string;
   title: string;
+  date: string;
+  location?: string;
+  time_label?: string;
   content?: PortableTextBlock[];
-  excerpt?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  publishedAt: Date | null;
-  bylines?: ContentBylineCredit[];
-}
-
-export interface OurGallery {
-  id: string;
-  slug: string | null;
-  status: string;
-  title: string;
-  content?: PortableTextBlock[];
-  excerpt?: string;
-  featured_image?: { id: string; src?: string; alt?: string; width?: number; height?: number; provider?: string; previewUrl?: string; meta?: Record<string, unknown> };
-  createdAt: Date;
-  updatedAt: Date;
-  publishedAt: Date | null;
-  bylines?: ContentBylineCredit[];
-}
-
-export interface OurService {
-  id: string;
-  slug: string | null;
-  status: string;
-  title: string;
-  content?: PortableTextBlock[];
-  excerpt?: string;
-  featured_image?: { id: string; src?: string; alt?: string; width?: number; height?: number; provider?: string; previewUrl?: string; meta?: Record<string, unknown> };
-  createdAt: Date;
-  updatedAt: Date;
-  publishedAt: Date | null;
-  bylines?: ContentBylineCredit[];
-}
-
-export interface OurTeam {
-  id: string;
-  slug: string | null;
-  status: string;
-  title: string;
-  content?: PortableTextBlock[];
-  excerpt?: string;
-  featured_image?: { id: string; src?: string; alt?: string; width?: number; height?: number; provider?: string; previewUrl?: string; meta?: Record<string, unknown> };
-  createdAt: Date;
-  updatedAt: Date;
-  publishedAt: Date | null;
-  bylines?: ContentBylineCredit[];
-}
-
-export interface Ourtestimonial {
-  id: string;
-  slug: string | null;
-  status: string;
-  title: string;
-  content?: PortableTextBlock[];
-  excerpt?: string;
-  featured_image?: { id: string; src?: string; alt?: string; width?: number; height?: number; provider?: string; previewUrl?: string; meta?: Record<string, unknown> };
   createdAt: Date;
   updatedAt: Date;
   publishedAt: Date | null;
@@ -80,33 +26,6 @@ export interface Page {
   status: string;
   title: string;
   content?: PortableTextBlock[];
-  excerpt?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  publishedAt: Date | null;
-  bylines?: ContentBylineCredit[];
-}
-
-export interface Popup {
-  id: string;
-  slug: string | null;
-  status: string;
-  title: string;
-  content?: PortableTextBlock[];
-  excerpt?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  publishedAt: Date | null;
-  bylines?: ContentBylineCredit[];
-}
-
-export interface PopupTheme {
-  id: string;
-  slug: string | null;
-  status: string;
-  title: string;
-  content?: PortableTextBlock[];
-  excerpt?: string;
   createdAt: Date;
   updatedAt: Date;
   publishedAt: Date | null;
@@ -127,26 +46,15 @@ export interface Post {
   bylines?: ContentBylineCredit[];
 }
 
-export interface Slider {
+export interface Vacature {
   id: string;
   slug: string | null;
   status: string;
-  title: string;
-  content?: PortableTextBlock[];
-  excerpt?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  publishedAt: Date | null;
-  bylines?: ContentBylineCredit[];
-}
-
-export interface Wpcf7ContactForm {
-  id: string;
-  slug: string | null;
-  status: string;
-  title: string;
-  content?: PortableTextBlock[];
-  excerpt?: string;
+  role: string;
+  organization?: string;
+  commitment?: string;
+  description?: string;
+  icon_type?: string;
   createdAt: Date;
   updatedAt: Date;
   publishedAt: Date | null;
@@ -155,16 +63,9 @@ export interface Wpcf7ContactForm {
 
 declare module "emdash" {
   interface EmDashCollections {
-    elementor_library: ElementorLibrary;
-    our_gallery: OurGallery;
-    our_service: OurService;
-    our_team: OurTeam;
-    ourtestimonial: Ourtestimonial;
+    events: Evenement;
     pages: Page;
-    popup: Popup;
-    popup_theme: PopupTheme;
     posts: Post;
-    slider: Slider;
-    wpcf7_contact_form: Wpcf7ContactForm;
+    vacatures: Vacature;
   }
 }

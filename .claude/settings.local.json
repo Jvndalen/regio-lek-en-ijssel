@@ -17,7 +17,8 @@
       "Bash(pnpm approve-builds *)",
       "Bash(pnpm rebuild *)",
       "Bash(pnpm build *)",
-      "Bash(timeout 5 pnpm start)"
+      "Bash(timeout 5 pnpm start)",
+      "Bash(npx emdash *)"
     ]
   }
 }

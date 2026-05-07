@@ -98,7 +98,12 @@ const isLoggedIn = !!Astro.locals.user;
 						<span>Regio Lek- en IJsselstreek</span>
 					</div>
 				</a>
-				<nav class="site-nav" aria-label="Hoofdnavigatie">
+				<button class="menu-toggle" aria-label="Menu openen" aria-expanded="false" aria-controls="site-nav">
+					<span class="burger-bar"></span>
+					<span class="burger-bar"></span>
+					<span class="burger-bar"></span>
+				</button>
+				<nav class="site-nav" id="site-nav" aria-label="Hoofdnavigatie">
 					{
 						menu?.items.map((item) => (
 							<a href={item.url} target={item.target} class="nav-link">
@@ -116,17 +121,17 @@ const isLoggedIn = !!Astro.locals.user;
 					{isLoggedIn && (
 						<a href="/_emdash/admin" class="nav-admin">Admin</a>
 					)}
+					<div class="header-search">
+						<LiveSearch
+							placeholder="Zoeken…"
+							class="site-search"
+							inputClass="site-search-input"
+							resultsClass="site-search-results"
+							resultClass="site-search-result"
+							collections={["posts", "pages"]}
+						/>
+					</div>
 				</nav>
-				<div class="header-search">
-					<LiveSearch
-						placeholder="Zoeken…"
-						class="site-search"
-						inputClass="site-search-input"
-						resultsClass="site-search-results"
-						resultClass="site-search-result"
-						collections={["posts", "pages"]}
-					/>
-				</div>
 			</div>
 		</header>
 
@@ -546,6 +551,7 @@ const isLoggedIn = !!Astro.locals.user;
 			.header-search {
 				position: relative;
 				flex-shrink: 0;
+				margin-left: auto;
 			}
 
 			:global(.site-search-input) {
@@ -555,8 +561,11 @@ const isLoggedIn = !!Astro.locals.user;
 				font-size: var(--font-size-sm);
 				border: 1px solid rgba(255,255,255,.35);
 				border-radius: var(--radius-pill);
-				background: rgba(255,255,255,.14);
+				background: rgba(255,255,255,.15);
 				color: #fff;
+				/* prevent browser from overriding with a white autofill background */
+				-webkit-box-shadow: 0 0 0 1000px rgba(255,255,255,.15) inset;
+				-webkit-text-fill-color: #fff;
 				transition: border-color var(--transition-fast), background var(--transition-fast);
 			}
 
@@ -566,6 +575,7 @@ const isLoggedIn = !!Astro.locals.user;
 			:global(.site-search-input):focus-visible {
 				outline: none;
 				background: rgba(255,255,255,.22);
+				-webkit-box-shadow: 0 0 0 1000px rgba(255,255,255,.22) inset;
 				border-color: rgba(255,255,255,.8) !important;
 			}
 
@@ -840,6 +850,44 @@ const isLoggedIn = !!Astro.locals.user;
 				.ftr-newsletter-col { grid-column: span 3; }
 			}
 
+			/* Hamburger button — hidden on desktop */
+			.menu-toggle {
+				display: none;
+				flex-direction: column;
+				justify-content: center;
+				gap: 5px;
+				width: 40px;
+				height: 40px;
+				padding: 8px;
+				background: rgba(255,255,255,.15);
+				border: none;
+				border-radius: var(--radius-pill);
+				cursor: pointer;
+				margin-left: auto;
+				flex-shrink: 0;
+			}
+
+			.burger-bar {
+				display: block;
+				width: 100%;
+				height: 2px;
+				background: #fff;
+				border-radius: 2px;
+				transition: transform var(--transition-base), opacity var(--transition-base);
+				transform-origin: center;
+			}
+
+			.menu-toggle[aria-expanded="true"] .burger-bar:nth-child(1) {
+				transform: translateY(7px) rotate(45deg);
+			}
+			.menu-toggle[aria-expanded="true"] .burger-bar:nth-child(2) {
+				opacity: 0;
+				transform: scaleX(0);
+			}
+			.menu-toggle[aria-expanded="true"] .burger-bar:nth-child(3) {
+				transform: translateY(-7px) rotate(-45deg);
+			}
+
 			@media (max-width: 860px) {
 				.wordmark span { font-size: 14px; }
 				.site-nav { gap: 2px; }
@@ -848,18 +896,88 @@ const isLoggedIn = !!Astro.locals.user;
 
 			@media (max-width: 720px) {
 				.header-inner {
-					flex-wrap: wrap;
 					height: auto;
 					padding: 12px 20px;
+					flex-wrap: nowrap;
 				}
 
+				.menu-toggle { display: flex; }
+
+				/* Nav hidden by default on mobile, shown when open */
 				.site-nav {
-					order: 3;
-					width: 100%;
-					margin-left: 0;
+					display: none;
+					position: absolute;
+					top: 100%;
+					left: 0;
+					right: 0;
+					z-index: 200;
+					background: var(--color-primary);
+					padding: 12px 20px 20px;
+					flex-direction: column;
+					gap: 4px;
+					box-shadow: 0 8px 24px rgba(0,0,0,.15);
 				}
 
-				.header-search { order: 2; margin-left: auto; }
+				.site-nav.is-open {
+					display: flex;
+				}
+
+				.site-header { position: sticky; top: 0; }
+
+				.nav-link {
+					padding: 12px 16px;
+					font-size: var(--font-size-sm);
+					border-radius: var(--radius);
+					width: 100%;
+				}
+
+				.kalender-btn {
+					margin-left: 0;
+					margin-top: 4px;
+					justify-content: center;
+				}
+
+				/* Search inside dropdown on mobile: full width, top margin separator */
+				.header-search {
+					margin-left: 0;
+					margin-top: 8px;
+					width: 100%;
+					padding-top: 12px;
+					border-top: 1px solid rgba(255,255,255,.15);
+				}
+
+:global(.site-search-input) {
+				width: 100%;
+				border-radius: var(--radius);
+				background: rgba(255,255,255,.35);
+				color: #fff;
+				border: 2px solid rgba(255,255,255,.5);
+				-webkit-box-shadow: 0 0 0 1000px rgba(255,255,255,.35) inset;
+				-webkit-text-fill-color: #fff;
+				-moz-appearance: none;
+				-webkit-appearance: none;
+				appearance: none;
+			}
+
+			:global(.site-search-input)::placeholder {
+				color: rgba(255,255,255,.85) !important;
+				-webkit-text-fill-color: rgba(255,255,255,.85);
+			}
+
+			:global(.site-search-input):focus,
+			:global(.site-search-input):focus-visible {
+				outline: none;
+				background: rgba(255,255,255,.4);
+				-webkit-box-shadow: 0 0 0 1000px rgba(255,255,255,.4) inset;
+				border-color: rgba(255,255,255,.9);
+			}
+
+				:global(.site-search-results) {
+					right: auto;
+					left: 0;
+					width: 100%;
+					min-width: 0;
+				}
 
 				.ftr-grid {
 					grid-template-columns: 1fr 1fr;
@@ -893,6 +1011,31 @@ const isLoggedIn = !!Astro.locals.user;
 					if (searchInput) searchInput.focus();
 				}
 			});
+
+			// Hamburger menu toggle
+			const toggle = document.querySelector(".menu-toggle") as HTMLButtonElement | null;
+			const nav = document.getElementById("site-nav");
+			if (toggle && nav) {
+				toggle.addEventListener("click", () => {
+					const open = toggle.getAttribute("aria-expanded") === "true";
+					toggle.setAttribute("aria-expanded", String(!open));
+					toggle.setAttribute("aria-label", open ? "Menu openen" : "Menu sluiten");
+					nav.classList.toggle("is-open", !open);
+				});
+
+				// Close on outside click
+				document.addEventListener("click", (e) => {
+					if (
+						nav.classList.contains("is-open") &&
+						!nav.contains(e.target as Node) &&
+						!toggle.contains(e.target as Node)
+					) {
+						toggle.setAttribute("aria-expanded", "false");
+						toggle.setAttribute("aria-label", "Menu openen");
+						nav.classList.remove("is-open");
+					}
+				});
+			}
 		</script>
 		<EmDashBodyEnd page={pageCtx} />
 	</body>

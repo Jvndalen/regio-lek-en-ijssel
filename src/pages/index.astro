@@ -9,22 +9,44 @@ import PostCard from "../components/PostCard.astro";
 import { getReadingTime } from "../utils/reading-time";
 import { resolveBlogSiteIdentity } from "../utils/site-identity";
 
-const [{ entries: posts, cacheHint }, settings] = await Promise.all([
+const [
+	{ entries: posts, cacheHint: postsCacheHint },
+	{ entries: allEvents, cacheHint: eventsCacheHint },
+	{ entries: vacatures, cacheHint: vacaturesCacheHint },
+	settings,
+] = await Promise.all([
 	getEmDashCollection("posts", {
 		orderBy: { published_at: "desc" },
 		limit: 3,
 	}),
+	getEmDashCollection("events", {
+		orderBy: { date: "asc" },
+		limit: 8,
+	}),
+	getEmDashCollection("vacatures", {
+		limit: 3,
+	}),
 	getSiteSettings(),
 ]);
+
+Astro.cache.set(postsCacheHint);
+Astro.cache.set(eventsCacheHint);
+Astro.cache.set(vacaturesCacheHint);
+
 const { siteTitle, siteTagline } = resolveBlogSiteIdentity(settings);
 
-Astro.cache.set(cacheHint);
+const now = new Date();
+const upcomingEvents = allEvents
+	.filter((e) => e.data.date && new Date(e.data.date) >= now)
+	.sort((a, b) => new Date(a.data.date).getTime() - new Date(b.data.date).getTime())
+	.slice(0, 4);
 
-const tagsByEntry = await getTermsForEntries(
-	"posts",
-	posts.map((p) => p.data.id),
-	"tag"
-);
+const [tagsByEntry, groepTypeByEvent] = await Promise.all([
+	getTermsForEntries("posts", posts.map((p) => p.data.id), "tag"),
+	upcomingEvents.length > 0
+		? getTermsForEntries("events", upcomingEvents.map((e) => e.data.id), "groep_type")
+		: Promise.resolve(new Map()),
+]);
 
 const postsWithTags = posts.map((post) => ({
 	post,
@@ -33,6 +55,24 @@ const postsWithTags = posts.map((post) => ({
 		label: t.label,
 	})),
 }));
+
+const eventsWithGroepType = upcomingEvents.map((event) => ({
+	event,
+	groepType: (groepTypeByEvent.get(event.data.id) ?? [])[0] ?? null,
+}));
+
+const groepTypeClassMap: Record<string, string> = {
+	"alle-groepen": "event-tag--regio",
+	"vrijwilligers": "event-tag--training",
+	"watergroepen": "event-tag--water",
+	"landgroepen": "event-tag--land",
+};
+
+const formatDay = (date: string) => new Date(date).getDate();
+const formatMonth = (date: string) => {
+	const m = new Date(date).toLocaleString("nl-NL", { month: "short" });
+	return m.charAt(0).toUpperCase() + m.slice(1);
+};
 ---
 
 <Base title={siteTitle} description={siteTagline}>
@@ -71,7 +111,7 @@ const postsWithTags = posts.map((post) => ({
 
 	<!-- ── Quick tiles ───────────────────────────────────────────── -->
 	<div class="quick-tiles">
-		<a class="quick-tile quick-tile--featured" href="/posts">
+		<a class="quick-tile quick-tile--featured" href="/events">
 			<span class="qt-badge">Nieuw</span>
 			<span class="qt-arrow" aria-hidden="true">
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M7 17L17 7M7 7h10v10"/></svg>
@@ -82,7 +122,7 @@ const postsWithTags = posts.map((post) => ({
 			<h3>Activiteiten</h3>
 			<p class="qt-meta">Hemelvaartsontmoeting, regiospelen, kampweekenden — alles in de agenda.</p>
 		</a>
-		<a class="quick-tile" href="/posts" style="--qt-accent:#28B0E6">
+		<a class="quick-tile" href="/vacatures" style="--qt-accent:#28B0E6">
 			<span class="qt-arrow" aria-hidden="true">
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M7 17L17 7M7 7h10v10"/></svg>
 			</span>
@@ -126,93 +166,47 @@ const postsWithTags = posts.map((post) => ({
 						of kom kijken wat er speelt.
 					</p>
 				</div>
-				<a href="/posts" class="btn btn-outline">
+				<a href="/events" class="btn btn-outline">
 					Volledige kalender
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
 				</a>
 			</div>
-			<div class="event-grid">
-				<a class="event-card" href="/posts">
-					<div class="event-date">
-						<span class="d">14</span>
-						<span class="m">Mei</span>
-					</div>
-					<div class="event-body">
-						<span class="event-tag event-tag--regio">Alle groepen</span>
-						<h4>Hemelvaartsontmoeting</h4>
-						<div class="event-meta">
-							<span>
-								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
-								Schoonhoven · Buitenterrein
-							</span>
-							<span>
-								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-								09:30 – 17:00
-							</span>
-						</div>
-					</div>
-				</a>
-				<a class="event-card" href="/posts">
-					<div class="event-date">
-						<span class="d">6</span>
-						<span class="m">Jun</span>
-					</div>
-					<div class="event-body">
-						<span class="event-tag event-tag--training">Vrijwilligers</span>
-						<h4>Praktijkbegeleiderstraining</h4>
-						<div class="event-meta">
-							<span>
-								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
-								Scouting Academy · IJsselstein
-							</span>
-							<span>
-								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-								19:30 – 22:00
-							</span>
-						</div>
-					</div>
-				</a>
-				<a class="event-card" href="/posts">
-					<div class="event-date">
-						<span class="d">21</span>
-						<span class="m">Jun</span>
-					</div>
-					<div class="event-body">
-						<span class="event-tag event-tag--water">Watergroepen</span>
-						<h4>Regio Waterspelen</h4>
-						<div class="event-meta">
-							<span>
-								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
-								Reeuwijkse Plassen
-							</span>
-							<span>
-								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-								10:00 – 16:00
-							</span>
-						</div>
-					</div>
-				</a>
-				<a class="event-card" href="/posts">
-					<div class="event-date">
-						<span class="d">5</span>
-						<span class="m">Jul</span>
-					</div>
-					<div class="event-body">
-						<span class="event-tag event-tag--land">Landgroepen</span>
-						<h4>Zomerkamp opbouw — Landgroepen</h4>
-						<div class="event-meta">
-							<span>
-								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
-								Kampterrein Lopikerwaard
-							</span>
-							<span>
-								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-								Hele dag
-							</span>
-						</div>
-					</div>
-				</a>
-			</div>
+			{eventsWithGroepType.length > 0 ? (
+				<div class="event-grid">
+					{eventsWithGroepType.map(({ event, groepType }) => (
+						<a class="event-card" href={`/events/${event.id}`}>
+							<div class="event-date">
+								<span class="d">{formatDay(event.data.date)}</span>
+								<span class="m">{formatMonth(event.data.date)}</span>
+							</div>
+							<div class="event-body">
+								{groepType && (
+									<span class={`event-tag ${groepTypeClassMap[groepType.slug] ?? "event-tag--regio"}`}>
+										{groepType.label}
+									</span>
+								)}
+								<h4>{event.data.title}</h4>
+								<div class="event-meta">
+									{event.data.location && (
+										<span>
+											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
+											{event.data.location}
+										</span>
+									)}
+									{event.data.time_label && (
+										<span>
+											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+											{event.data.time_label}
+										</span>
+									)}
+								</div>
+							</div>
+						</a>
+					))}
+				</div>
+			) : (
+				<p class="no-posts">Er zijn momenteel geen aankomende activiteiten gepland.</p>
+			)}
 		</div>
 	</section>
 
@@ -275,64 +269,42 @@ const postsWithTags = posts.map((post) => ({
 						ruimte voor enthousiaste mensen — bestuur, trainers, organisatie.
 					</p>
 				</div>
-				<a href="/posts" class="btn btn-outline">
+				<a href="/vacatures" class="btn btn-outline">
 					Alle vacatures
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
 				</a>
 			</div>
-			<div class="vacature-grid">
-				<a class="vacature-card" href="/posts">
-					<div class="vacature-header">
-						<div class="vacature-icon">
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg>
-						</div>
-						<div>
-							<div class="vacature-org">Regiobestuur</div>
-							<div class="vacature-commit">4–6 uur per week</div>
-						</div>
-					</div>
-					<h4 class="vacature-role">Bestuurslid Communicatie</h4>
-					<p class="vacature-desc">Versterk het regiobestuur en geef richting aan de communicatie naar groepen, ouders en pers.</p>
-					<span class="vacature-link">
-						Lees meer
-						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-					</span>
-				</a>
-				<a class="vacature-card" href="/posts">
-					<div class="vacature-header">
-						<div class="vacature-icon">
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5L2 9z"/><path d="M6 11v5c2 2 10 2 12 0v-5M22 9v5"/></svg>
-						</div>
-						<div>
-							<div class="vacature-org">Scouting Academy</div>
-							<div class="vacature-commit">1 avond per maand</div>
-						</div>
-					</div>
-					<h4 class="vacature-role">Trainer Scouting Academy</h4>
-					<p class="vacature-desc">Begeleid (toekomstige) leiding tijdens trainingsavonden — van basisvaardigheden tot teamleiderschap.</p>
-					<span class="vacature-link">
-						Lees meer
-						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-					</span>
-				</a>
-				<a class="vacature-card" href="/posts">
-					<div class="vacature-header">
-						<div class="vacature-icon">
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><path d="M3 21l9-16 9 16H3zM12 21V11"/></svg>
-						</div>
-						<div>
-							<div class="vacature-org">Regiokamp 2026</div>
-							<div class="vacature-commit">Projectmatig</div>
-						</div>
-					</div>
-					<h4 class="vacature-role">Vrijwilliger Regiokampbouw</h4>
-					<p class="vacature-desc">Help mee met de organisatie van het tweejaarlijkse regiokamp. Logistiek, programma of techniek.</p>
-					<span class="vacature-link">
-						Lees meer
-						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-					</span>
-				</a>
-			</div>
+			{vacatures.length > 0 ? (
+				<div class="vacature-grid">
+					{vacatures.map((vacature) => (
+						<a class="vacature-card" href={`/vacatures/${vacature.id}`}>
+							<div class="vacature-header">
+								<div class="vacature-icon">
+									{vacature.data.icon_type === "training" ? (
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5L2 9z"/><path d="M6 11v5c2 2 10 2 12 0v-5M22 9v5"/></svg>
+									) : vacature.data.icon_type === "kamp" ? (
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><path d="M3 21l9-16 9 16H3zM12 21V11"/></svg>
+									) : (
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg>
+									)}
+								</div>
+								<div>
+									<div class="vacature-org">{vacature.data.organization}</div>
+									<div class="vacature-commit">{vacature.data.commitment}</div>
+								</div>
+							</div>
+							<h4 class="vacature-role">{vacature.data.role}</h4>
+							<p class="vacature-desc">{vacature.data.description}</p>
+							<span class="vacature-link">
+								Lees meer
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+							</span>
+						</a>
+					))}
+				</div>
+			) : (
+				<p class="no-posts">Er zijn momenteel geen openstaande vacatures.</p>
+			)}
 		</div>
 	</section>
 
@@ -980,6 +952,7 @@ const postsWithTags = posts.map((post) => ({
 	/* ── Responsive ──────────────────────────────────────────────── */
 	@media (max-width: 1000px) {
 		.quick-tiles { grid-template-columns: repeat(2, 1fr); margin-top: 0; padding-top: 40px; }
+		.hero-inner { padding-bottom: 80px; }
 		.regio-grid { grid-template-columns: 1fr; }
 		.vacature-grid { grid-template-columns: repeat(2, 1fr); }
 		.news-grid { grid-template-columns: repeat(2, 1fr); }
@@ -988,8 +961,8 @@ const postsWithTags = posts.map((post) => ({
 	@media (max-width: 680px) {
 		.container { padding: 0 20px; }
 		.hero-dot--main { right: -10% !important; top: -14% !important; width: 160px !important; height: 160px !important; }
-		.hero-inner { padding: 56px 20px 180px; }
-		.quick-tiles { grid-template-columns: 1fr; padding: 0 20px; }
+		.hero-inner { padding: 56px 20px 64px; }
+		.quick-tiles { grid-template-columns: 1fr; padding-top: 30px; margin: auto 0; }
 		.event-grid { grid-template-columns: 1fr; }
 		.vacature-grid { grid-template-columns: 1fr; }
 		.news-grid { grid-template-columns: 1fr; }

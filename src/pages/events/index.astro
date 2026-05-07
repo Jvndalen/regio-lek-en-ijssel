@@ -1,0 +1,427 @@
+---
+import { getEmDashCollection, getTermsForEntries } from "emdash";
+import Base from "../../layouts/Base.astro";
+
+const { entries: allEvents, cacheHint } = await getEmDashCollection("events", {
+	orderBy: { date: "asc" },
+});
+
+Astro.cache.set(cacheHint);
+
+const groepTypeByEvent = await getTermsForEntries(
+	"events",
+	allEvents.map((e) => e.data.id),
+	"groep_type",
+);
+
+const now = new Date();
+
+const upcomingEvents = allEvents.filter((e) => e.data.date && new Date(e.data.date) >= now);
+const pastEvents = allEvents
+	.filter((e) => e.data.date && new Date(e.data.date) < now)
+	.reverse();
+
+const groepTypeClassMap: Record<string, string> = {
+	"alle-groepen": "event-tag--regio",
+	"vrijwilligers": "event-tag--training",
+	"watergroepen": "event-tag--water",
+	"landgroepen": "event-tag--land",
+};
+
+const formatDay = (date: string) => new Date(date).getDate();
+const formatMonth = (date: string) => {
+	const m = new Date(date).toLocaleString("nl-NL", { month: "short" });
+	return m.charAt(0).toUpperCase() + m.slice(1);
+};
+const formatYear = (date: string) => new Date(date).getFullYear();
+const formatFullDate = (date: string) =>
+	new Date(date).toLocaleDateString("nl-NL", {
+		weekday: "long",
+		year: "numeric",
+		month: "long",
+		day: "numeric",
+	});
+---
+
+<Base
+	title="Agenda"
+	description="Alle aankomende activiteiten, trainingen en evenementen van Scouting Regio Lek- en IJsselstreek."
+>
+	<!-- ── Page hero ──────────────────────────────────────────────── -->
+	<section class="page-hero">
+		<div class="hero-blobs" aria-hidden="true">
+			<svg viewBox="0 0 1440 460" preserveAspectRatio="none">
+				<path
+					d="M0,0 L1440,0 L1440,340 C1180,440 720,340 480,400 C240,460 120,400 0,440 Z"
+					fill="var(--color-primary)"/>
+			</svg>
+		</div>
+		<div class="hero-container">
+			<nav class="breadcrumb" aria-label="Broodkruimels">
+				<a href="/">Home</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<span aria-current="page">Agenda</span>
+			</nav>
+			<h1>Agenda</h1>
+			<p class="hero-lede">
+				Activiteiten, trainingen en regionale evenementen — alles wat er speelt
+				tussen Lek en IJssel.
+			</p>
+		</div>
+	</section>
+
+	<!-- ── Events ─────────────────────────────────────────────────── -->
+	<section class="events-section">
+		<div class="container">
+
+			{/* Upcoming events */}
+			<div class="section-block">
+				<div class="section-head">
+					<p class="eyebrow">Aankomend</p>
+					<h2 class="section-title">Wat staat er op de planning?</h2>
+				</div>
+
+				{upcomingEvents.length === 0 ? (
+					<p class="empty">Er zijn momenteel geen aankomende activiteiten gepland.</p>
+				) : (
+					<div class="event-grid">
+						{upcomingEvents.map((event) => {
+							const groepType = (groepTypeByEvent.get(event.data.id) ?? [])[0] ?? null;
+							return (
+								<a class="event-card" href={`/events/${event.id}`}>
+									<div class="event-date">
+										<span class="d">{formatDay(event.data.date)}</span>
+										<span class="m">{formatMonth(event.data.date)}</span>
+										<span class="y">{formatYear(event.data.date)}</span>
+									</div>
+									<div class="event-body">
+										{groepType && (
+											<span class={`event-tag ${groepTypeClassMap[groepType.slug] ?? "event-tag--regio"}`}>
+												{groepType.label}
+											</span>
+										)}
+										<h3>{event.data.title}</h3>
+										<div class="event-meta">
+											{event.data.location && (
+												<span>
+													<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
+													{event.data.location}
+												</span>
+											)}
+											{event.data.time_label && (
+												<span>
+													<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+													{event.data.time_label}
+												</span>
+											)}
+										</div>
+									</div>
+									<div class="event-arrow" aria-hidden="true">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+									</div>
+								</a>
+							);
+						})}
+					</div>
+				)}
+			</div>
+
+			{/* Past events */}
+			{pastEvents.length > 0 && (
+				<div class="section-block section-block--past">
+					<div class="section-head">
+						<p class="eyebrow">Afgelopen</p>
+						<h2 class="section-title">Eerder dit jaar</h2>
+					</div>
+					<div class="event-grid event-grid--past">
+						{pastEvents.map((event) => {
+							const groepType = (groepTypeByEvent.get(event.data.id) ?? [])[0] ?? null;
+							return (
+								<a class="event-card event-card--past" href={`/events/${event.id}`}>
+									<div class="event-date event-date--past">
+										<span class="d">{formatDay(event.data.date)}</span>
+										<span class="m">{formatMonth(event.data.date)}</span>
+										<span class="y">{formatYear(event.data.date)}</span>
+									</div>
+									<div class="event-body">
+										{groepType && (
+											<span class={`event-tag ${groepTypeClassMap[groepType.slug] ?? "event-tag--regio"}`}>
+												{groepType.label}
+											</span>
+										)}
+										<h3>{event.data.title}</h3>
+										<div class="event-meta">
+											{event.data.location && (
+												<span>
+													<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
+													{event.data.location}
+												</span>
+											)}
+											{event.data.time_label && (
+												<span>
+													<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+													{event.data.time_label}
+												</span>
+											)}
+										</div>
+									</div>
+									<div class="event-arrow" aria-hidden="true">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+									</div>
+								</a>
+							);
+						})}
+					</div>
+				</div>
+			)}
+		</div>
+	</section>
+</Base>
+
+<style>
+	/* ── Page hero ───────────────────────────────────────────────── */
+	.page-hero {
+		position: relative;
+		background: #A8D58A;
+		overflow: hidden;
+		isolation: isolate;
+	}
+
+	.hero-blobs {
+		position: absolute;
+		inset: 0;
+		z-index: 0;
+	}
+
+	.hero-blobs svg { width: 100%; height: 100%; display: block; }
+
+	.hero-container {
+		position: relative;
+		z-index: 1;
+		max-width: 1240px;
+		margin: 0 auto;
+		padding: 56px 32px 80px;
+	}
+
+	.breadcrumb {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 20px;
+		font-size: 13px;
+	}
+
+	.breadcrumb a {
+		color: rgba(255,255,255,.85);
+		text-decoration: none;
+		font-weight: 600;
+	}
+
+	.breadcrumb a:hover { color: #fff; }
+	.breadcrumb .sep { color: rgba(255,255,255,.5); }
+	.breadcrumb span:last-child { color: #fff; font-weight: 700; }
+
+	.page-hero h1 {
+		font-size: clamp(2rem, 4vw, 3.25rem);
+		font-weight: 900;
+		color: #fff;
+		letter-spacing: -.02em;
+		margin-bottom: 14px;
+	}
+
+	.hero-lede {
+		font-size: 17px;
+		line-height: 1.6;
+		color: rgba(255,255,255,.9);
+		max-width: 60ch;
+		margin: 0;
+	}
+
+	/* ── Events section ──────────────────────────────────────────── */
+	.events-section {
+		padding: 56px 0 96px;
+	}
+
+	.container {
+		max-width: 1240px;
+		margin: 0 auto;
+		padding: 0 32px;
+	}
+
+	.section-block {
+		margin-bottom: 72px;
+	}
+
+	.section-block--past {
+		padding-top: 56px;
+		border-top: 1px solid var(--color-border);
+	}
+
+	.section-head {
+		margin-bottom: 32px;
+	}
+
+	.eyebrow {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 12px;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: .08em;
+		color: var(--color-primary-hover);
+		margin: 0 0 8px;
+	}
+
+	.eyebrow::before {
+		content: "";
+		width: 24px;
+		height: 2px;
+		background: currentColor;
+		display: inline-block;
+	}
+
+	.section-title {
+		font-size: clamp(1.5rem, 2.4vw, 2rem);
+		font-weight: 900;
+		letter-spacing: -.015em;
+		margin: 0;
+		color: var(--color-text);
+	}
+
+	.empty {
+		color: var(--color-muted);
+		font-size: 16px;
+	}
+
+	/* ── Event grid ──────────────────────────────────────────────── */
+	.event-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 20px;
+	}
+
+	.event-grid--past {
+		grid-template-columns: repeat(3, 1fr);
+	}
+
+	/* ── Event card ──────────────────────────────────────────────── */
+	.event-card {
+		background: #fff;
+		border-radius: 22px;
+		padding: 22px;
+		box-shadow: var(--shadow-card);
+		display: flex;
+		gap: 18px;
+		align-items: center;
+		transition: transform var(--transition-base), box-shadow var(--transition-base);
+		text-decoration: none;
+		color: var(--color-text);
+		border: 1px solid var(--color-border);
+	}
+
+	.event-card:hover {
+		transform: translateY(-2px);
+		box-shadow: var(--shadow-card-hover);
+		text-decoration: none;
+		color: var(--color-text);
+	}
+
+	.event-card:hover .event-arrow {
+		color: var(--color-primary);
+		transform: translateX(3px);
+	}
+
+	.event-card--past {
+		opacity: .72;
+	}
+
+	.event-card--past:hover {
+		opacity: 1;
+	}
+
+	/* Date block */
+	.event-date {
+		flex-shrink: 0;
+		width: 68px;
+		border-radius: 16px;
+		background: var(--color-primary);
+		color: #fff;
+		text-align: center;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 12px 0;
+		gap: 1px;
+	}
+
+	.event-date--past {
+		background: var(--color-muted);
+	}
+
+	.event-date .d { font-size: 28px; font-weight: 900; line-height: 1; }
+	.event-date .m { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+	.event-date .y { font-size: 10px; font-weight: 600; opacity: .75; margin-top: 2px; }
+
+	/* Body */
+	.event-body { flex: 1; min-width: 0; }
+
+	.event-body h3 {
+		font-size: 17px;
+		font-weight: 800;
+		margin: 4px 0 6px;
+		line-height: 1.25;
+	}
+
+	/* Tag */
+	.event-tag {
+		display: inline-block;
+		font-size: 11px;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: .06em;
+		padding: 3px 8px;
+		border-radius: 6px;
+		margin-bottom: 4px;
+	}
+
+	.event-tag--regio   { background: #E6EAF2; color: var(--color-navy); }
+	.event-tag--training { background: #E6EAF2; color: var(--color-navy); }
+	.event-tag--water   { background: #DDF1FA; color: var(--color-accent-hover); }
+	.event-tag--land    { background: #EAF6E2; color: var(--color-primary-hover); }
+
+	/* Meta row */
+	.event-meta {
+		display: flex;
+		gap: 14px;
+		flex-wrap: wrap;
+		font-size: 13px;
+		color: var(--color-muted);
+	}
+
+	.event-meta span {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+	}
+
+	/* Arrow */
+	.event-arrow {
+		flex-shrink: 0;
+		color: var(--color-border);
+		transition: color var(--transition-base), transform var(--transition-base);
+	}
+
+	/* ── Responsive ──────────────────────────────────────────────── */
+	@media (max-width: 1000px) {
+		.event-grid { grid-template-columns: 1fr; }
+		.event-grid--past { grid-template-columns: repeat(2, 1fr); }
+	}
+
+	@media (max-width: 680px) {
+		.container { padding: 0 20px; }
+		.hero-container { padding: 40px 20px 60px; }
+		.event-grid--past { grid-template-columns: 1fr; }
+	}
+</style>

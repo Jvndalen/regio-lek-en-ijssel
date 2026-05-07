@@ -1,0 +1,747 @@
+---
+import { getEmDashEntry, getEmDashCollection, getEntryTerms, getTermsForEntries, decodeSlug } from "emdash";
+import { PortableText } from "emdash/ui";
+import Base from "../../layouts/Base.astro";
+
+const slug = decodeSlug(Astro.params.slug);
+
+if (!slug) {
+	return Astro.redirect("/404");
+}
+
+const { entry: event, cacheHint } = await getEmDashEntry("events", slug);
+
+if (!event) {
+	return Astro.redirect("/404");
+}
+
+Astro.cache.set(cacheHint);
+
+const [groepTypes, { entries: allEvents, cacheHint: allCacheHint }] = await Promise.all([
+	getEntryTerms("events", event.data.id, "groep_type"),
+	getEmDashCollection("events", { orderBy: { date: "asc" }, limit: 10 }),
+]);
+
+Astro.cache.set(allCacheHint);
+
+const groepType = groepTypes[0] ?? null;
+
+const now = new Date();
+const relatedEvents = allEvents
+	.filter((e) => e.id !== event.id && e.data.date && new Date(e.data.date) >= now)
+	.slice(0, 3);
+
+const relatedGroepTypes = relatedEvents.length > 0
+	? await getTermsForEntries("events", relatedEvents.map((e) => e.data.id), "groep_type")
+	: new Map();
+
+const groepTypeClassMap: Record<string, string> = {
+	"alle-groepen": "event-tag--regio",
+	"vrijwilligers": "event-tag--training",
+	"watergroepen": "event-tag--water",
+	"landgroepen": "event-tag--land",
+};
+
+const eventDate = event.data.date ? new Date(event.data.date) : null;
+
+const formatDay = (d: Date) => d.getDate();
+const formatMonth = (d: Date) => {
+	const m = d.toLocaleString("nl-NL", { month: "short" });
+	return m.charAt(0).toUpperCase() + m.slice(1);
+};
+const formatYear = (d: Date) => d.getFullYear();
+
+const fullDate = eventDate
+	? eventDate.toLocaleDateString("nl-NL", {
+			weekday: "long",
+			year: "numeric",
+			month: "long",
+			day: "numeric",
+	  })
+	: null;
+
+const isPast = eventDate ? eventDate < now : false;
+---
+
+<Base
+	title={event.data.title ?? "Evenement"}
+	description={event.data.location
+		? `${event.data.title} — ${event.data.location}`
+		: event.data.title ?? undefined}
+>
+	<!-- ── Page hero ──────────────────────────────────────────────── -->
+	<section class="page-hero">
+		<div class="hero-blobs" aria-hidden="true">
+			<svg viewBox="0 0 1440 460" preserveAspectRatio="none">
+				<path
+					d="M0,0 L1440,0 L1440,340 C1180,440 720,340 480,400 C240,460 120,400 0,440 Z"
+					fill="var(--color-primary)"/>
+			</svg>
+		</div>
+		<div class="hero-container">
+			<nav class="breadcrumb" aria-label="Broodkruimels">
+				<a href="/">Home</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<a href="/events">Agenda</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<span aria-current="page">{event.data.title}</span>
+			</nav>
+
+			<div class="hero-content">
+				<div class="hero-date-block" aria-hidden="true">
+					{eventDate && (
+						<>
+							<span class="hd-day">{formatDay(eventDate)}</span>
+							<span class="hd-month">{formatMonth(eventDate)}</span>
+							<span class="hd-year">{formatYear(eventDate)}</span>
+						</>
+					)}
+				</div>
+				<div class="hero-text">
+					{groepType && (
+						<span class={`hero-tag ${groepTypeClassMap[groepType.slug] ?? "hero-tag--regio"}`}>
+							{groepType.label}
+						</span>
+					)}
+					{isPast && <span class="hero-tag hero-tag--past">Afgelopen</span>}
+					<h1>{event.data.title}</h1>
+					<div class="hero-meta">
+						{fullDate && (
+							<span class="hero-meta-item">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>
+								<span class="sr-only">Datum:</span>
+								{fullDate}
+							</span>
+						)}
+						{event.data.time_label && (
+							<span class="hero-meta-item">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+								<span class="sr-only">Tijdstip:</span>
+								{event.data.time_label}
+							</span>
+						)}
+						{event.data.location && (
+							<span class="hero-meta-item">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
+								<span class="sr-only">Locatie:</span>
+								{event.data.location}
+							</span>
+						)}
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- ── Event detail ───────────────────────────────────────────── -->
+	<section class="detail-section">
+		<div class="container">
+			<div class="detail-grid">
+
+				<!-- Info card -->
+				<aside class="info-card">
+					<h2 class="info-title">Details</h2>
+					<dl class="info-list">
+						{fullDate && (
+							<>
+								<dt>
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>
+									Datum
+								</dt>
+								<dd>{fullDate}</dd>
+							</>
+						)}
+						{event.data.time_label && (
+							<>
+								<dt>
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+									Tijdstip
+								</dt>
+								<dd>{event.data.time_label}</dd>
+							</>
+						)}
+						{event.data.location && (
+							<>
+								<dt>
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
+									Locatie
+								</dt>
+								<dd>{event.data.location}</dd>
+							</>
+						)}
+						{groepType && (
+							<>
+								<dt>
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2 21c0-3.5 3-6 7-6s7 2.5 7 6M17 11a3 3 0 0 0 0-6M22 21c0-3-2-5-5-5"/></svg>
+									Voor wie
+								</dt>
+								<dd>
+									<span class={`event-tag ${groepTypeClassMap[groepType.slug] ?? "event-tag--regio"}`}>
+										{groepType.label}
+									</span>
+								</dd>
+							</>
+						)}
+					</dl>
+
+					<a href="/events" class="back-link">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+						Terug naar agenda
+					</a>
+				</aside>
+
+				<!-- Main content area -->
+				<div class="detail-main">
+					{event.data.content && event.data.content.length > 0 ? (
+						<div class="event-content" {...event.edit.content}>
+							<PortableText value={event.data.content} />
+						</div>
+					) : (
+						<div class="detail-empty">
+							<div class="de-icon" aria-hidden="true">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="40" height="40"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>
+							</div>
+							<p>Meer informatie over dit evenement volgt binnenkort.</p>
+							<p class="de-sub">Houd de agenda in de gaten of neem contact op met het regiobestuur voor vragen.</p>
+						</div>
+					)}
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- ── Related events ─────────────────────────────────────────── -->
+	{relatedEvents.length > 0 && (
+		<section class="related-section">
+			<div class="container">
+				<div class="section-head">
+					<p class="eyebrow">Agenda</p>
+					<h2 class="section-title">Meer aankomende activiteiten</h2>
+				</div>
+				<div class="event-grid">
+					{relatedEvents.map((e) => {
+						const gt = (relatedGroepTypes.get(e.data.id) ?? [])[0] ?? null;
+						const d = e.data.date ? new Date(e.data.date) : null;
+						return (
+							<a class="event-card" href={`/events/${e.id}`}>
+								<div class="event-date-block">
+									{d && (
+										<>
+											<span class="d">{formatDay(d)}</span>
+											<span class="m">{formatMonth(d)}</span>
+											<span class="y">{formatYear(d)}</span>
+										</>
+									)}
+								</div>
+								<div class="event-body">
+									{gt && (
+										<span class={`event-tag ${groepTypeClassMap[gt.slug] ?? "event-tag--regio"}`}>
+											{gt.label}
+										</span>
+									)}
+									<h3>{e.data.title}</h3>
+									<div class="event-meta">
+										{e.data.location && (
+											<span>
+												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13" aria-hidden="true"><path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13z"/><circle cx="12" cy="9" r="2.5"/></svg>
+												{e.data.location}
+											</span>
+										)}
+										{e.data.time_label && (
+											<span>
+												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+												{e.data.time_label}
+											</span>
+										)}
+									</div>
+								</div>
+							</a>
+						);
+					})}
+				</div>
+				<div class="related-footer">
+					<a href="/events" class="btn btn-outline">
+						Volledige agenda
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+					</a>
+				</div>
+			</div>
+		</section>
+	)}
+</Base>
+
+<style>
+	/* ── Page hero ───────────────────────────────────────────────── */
+	.page-hero {
+		position: relative;
+		background: #A8D58A;
+		overflow: hidden;
+		isolation: isolate;
+	}
+
+	.hero-blobs {
+		position: absolute;
+		inset: 0;
+		z-index: 0;
+	}
+
+	.hero-blobs svg { width: 100%; height: 100%; display: block; }
+
+	.hero-container {
+		position: relative;
+		z-index: 1;
+		max-width: 1240px;
+		margin: 0 auto;
+		padding: 56px 32px 80px;
+	}
+
+	.breadcrumb {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 28px;
+		font-size: 13px;
+		flex-wrap: wrap;
+	}
+
+	.breadcrumb a {
+		color: rgba(255,255,255,.85);
+		text-decoration: none;
+		font-weight: 600;
+	}
+
+	.breadcrumb a:hover { color: #fff; }
+	.breadcrumb .sep { color: rgba(255,255,255,.5); }
+	.breadcrumb span:last-child { color: #fff; font-weight: 700; }
+
+	.hero-content {
+		display: flex;
+		align-items: flex-start;
+		gap: 32px;
+	}
+
+	/* Big date block in hero */
+	.hero-date-block {
+		flex-shrink: 0;
+		width: 96px;
+		background: rgba(255,255,255,.18);
+		border: 2px solid rgba(255,255,255,.3);
+		border-radius: 22px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 16px 0;
+		color: #fff;
+		gap: 2px;
+	}
+
+	.hd-day  { font-size: 42px; font-weight: 900; line-height: 1; }
+	.hd-month { font-size: 14px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+	.hd-year  { font-size: 12px; font-weight: 600; opacity: .7; margin-top: 2px; }
+
+	.hero-text { flex: 1; }
+
+	.hero-tag {
+		display: inline-block;
+		font-size: 11px;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: .06em;
+		padding: 4px 10px;
+		border-radius: 6px;
+		margin-bottom: 12px;
+		margin-right: 6px;
+	}
+
+	.hero-tag--regio   { background: rgba(255,255,255,.22); color: #fff; }
+	.hero-tag--training { background: rgba(255,255,255,.22); color: #fff; }
+	.hero-tag--water   { background: #DDF1FA; color: var(--color-accent-hover); }
+	.hero-tag--land    { background: rgba(255,255,255,.22); color: #fff; }
+	.hero-tag--past    { background: rgba(0,0,0,.15); color: rgba(255,255,255,.8); }
+
+	.page-hero h1 {
+		font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+		font-weight: 900;
+		color: #fff;
+		letter-spacing: -.02em;
+		margin: 0 0 18px;
+		line-height: 1.1;
+	}
+
+	.hero-meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 16px;
+	}
+
+	.hero-meta-item {
+		display: inline-flex;
+		align-items: center;
+		gap: 7px;
+		font-size: 15px;
+		color: rgba(255,255,255,.92);
+		font-weight: 500;
+	}
+
+	/* ── Detail section ──────────────────────────────────────────── */
+	.detail-section {
+		padding: 56px 0 96px;
+	}
+
+	.container {
+		max-width: 1240px;
+		margin: 0 auto;
+		padding: 0 32px;
+	}
+
+	.detail-grid {
+		display: grid;
+		grid-template-columns: 320px 1fr;
+		gap: 40px;
+		align-items: start;
+	}
+
+	/* ── Info card ───────────────────────────────────────────────── */
+	.info-card {
+		background: #fff;
+		border-radius: 22px;
+		padding: 32px;
+		box-shadow: var(--shadow-card);
+		border: 1px solid var(--color-border);
+		position: sticky;
+		top: 24px;
+	}
+
+	.info-title {
+		font-size: 14px;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: .08em;
+		color: var(--color-muted);
+		margin: 0 0 20px;
+	}
+
+	.info-list {
+		display: grid;
+		gap: 0;
+		margin: 0 0 28px;
+	}
+
+	.info-list dt {
+		display: flex;
+		align-items: center;
+		gap: 7px;
+		font-size: 12px;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: .06em;
+		color: var(--color-muted);
+		margin-top: 18px;
+		margin-bottom: 4px;
+	}
+
+	.info-list dt:first-child { margin-top: 0; }
+
+	.info-list dd {
+		font-size: 15px;
+		font-weight: 600;
+		color: var(--color-text);
+		margin: 0;
+		line-height: 1.4;
+	}
+
+	/* Event tag inside info list */
+	.event-tag {
+		display: inline-block;
+		font-size: 11px;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: .06em;
+		padding: 3px 8px;
+		border-radius: 6px;
+	}
+
+	.event-tag--regio   { background: #E6EAF2; color: var(--color-navy); }
+	.event-tag--training { background: #E6EAF2; color: var(--color-navy); }
+	.event-tag--water   { background: #DDF1FA; color: var(--color-accent-hover); }
+	.event-tag--land    { background: #EAF6E2; color: var(--color-primary-hover); }
+
+	.back-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		font-size: 13px;
+		font-weight: 700;
+		color: var(--color-muted);
+		text-decoration: none;
+		transition: color var(--transition-fast);
+	}
+
+	.back-link:hover { color: var(--color-text); }
+
+	/* ── Detail main placeholder ─────────────────────────────────── */
+	.detail-main {
+		min-height: 240px;
+	}
+
+	.detail-empty {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 8px;
+		padding: 40px;
+		background: var(--color-bg-subtle);
+		border-radius: 22px;
+		border: 1px dashed var(--color-border);
+		color: var(--color-muted);
+	}
+
+	.de-icon {
+		color: var(--color-border);
+		margin-bottom: 8px;
+	}
+
+	.detail-empty p {
+		font-size: 16px;
+		font-weight: 600;
+		margin: 0;
+		color: var(--color-text-secondary, var(--color-muted));
+	}
+
+	.de-sub {
+		font-size: 14px !important;
+		font-weight: 400 !important;
+	}
+
+	/* ── Event content (PortableText) ────────────────────────────── */
+	.event-content {
+		font-size: 17px;
+		line-height: 1.7;
+		color: var(--color-text);
+	}
+
+	.event-content :global(p) {
+		margin-bottom: 1.4em;
+	}
+
+	.event-content :global(h2) {
+		font-size: clamp(1.25rem, 2vw, 1.6rem);
+		font-weight: 900;
+		color: var(--color-primary);
+		margin-top: 2.2em;
+		margin-bottom: 0.6em;
+		letter-spacing: -.015em;
+		scroll-margin-top: 24px;
+	}
+
+	.event-content :global(h3) {
+		font-size: 1.15rem;
+		font-weight: 800;
+		color: var(--color-primary-hover);
+		margin-top: 1.8em;
+		margin-bottom: 0.4em;
+		scroll-margin-top: 24px;
+	}
+
+	.event-content :global(ul),
+	.event-content :global(ol) {
+		margin-bottom: 1.4em;
+		padding-left: 1.5em;
+	}
+
+	.event-content :global(li) {
+		margin-bottom: 0.4em;
+	}
+
+	.event-content :global(blockquote) {
+		margin: 1.8em 0;
+		padding: 16px 24px;
+		border-left: 3px solid var(--color-primary);
+		background: var(--color-bg-subtle);
+		border-radius: 0 12px 12px 0;
+		color: var(--color-muted);
+		font-style: italic;
+	}
+
+	.event-content :global(a) {
+		color: var(--color-accent);
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	.event-content :global(strong) {
+		font-weight: 700;
+		color: var(--color-text);
+	}
+
+	/* ── Related events ──────────────────────────────────────────── */
+	.related-section {
+		background: var(--color-bg-subtle);
+		padding: 72px 0 80px;
+	}
+
+	.section-head {
+		margin-bottom: 32px;
+	}
+
+	.eyebrow {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 12px;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: .08em;
+		color: var(--color-primary-hover);
+		margin: 0 0 8px;
+	}
+
+	.eyebrow::before {
+		content: "";
+		width: 24px;
+		height: 2px;
+		background: currentColor;
+		display: inline-block;
+	}
+
+	.section-title {
+		font-size: clamp(1.4rem, 2.2vw, 1.9rem);
+		font-weight: 900;
+		letter-spacing: -.015em;
+		margin: 0;
+		color: var(--color-text);
+	}
+
+	.event-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 20px;
+	}
+
+	.event-card {
+		background: #fff;
+		border-radius: 22px;
+		padding: 22px;
+		box-shadow: var(--shadow-card);
+		display: flex;
+		gap: 16px;
+		align-items: center;
+		transition: transform var(--transition-base), box-shadow var(--transition-base);
+		text-decoration: none;
+		color: var(--color-text);
+		border: 1px solid var(--color-border);
+	}
+
+	.event-card:hover {
+		transform: translateY(-2px);
+		box-shadow: var(--shadow-card-hover);
+		text-decoration: none;
+		color: var(--color-text);
+	}
+
+	.event-date-block {
+		flex-shrink: 0;
+		width: 60px;
+		border-radius: 14px;
+		background: var(--color-primary);
+		color: #fff;
+		text-align: center;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 10px 0;
+		gap: 1px;
+	}
+
+	.event-date-block .d { font-size: 24px; font-weight: 900; line-height: 1; }
+	.event-date-block .m { font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+	.event-date-block .y { font-size: 9px; font-weight: 600; opacity: .75; margin-top: 1px; }
+
+	.event-body { flex: 1; min-width: 0; }
+
+	.event-body h3 {
+		font-size: 15px;
+		font-weight: 800;
+		margin: 4px 0 6px;
+		line-height: 1.25;
+	}
+
+	.event-meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
+		font-size: 12px;
+		color: var(--color-muted);
+	}
+
+	.event-meta span {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+	}
+
+	.related-footer {
+		margin-top: 32px;
+		display: flex;
+		justify-content: center;
+	}
+
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		padding: 12px 24px;
+		border-radius: var(--radius-pill);
+		font-weight: 800;
+		font-size: 13px;
+		text-transform: uppercase;
+		letter-spacing: .06em;
+		border: 2px solid transparent;
+		cursor: pointer;
+		font-family: inherit;
+		text-decoration: none;
+		transition: all var(--transition-base);
+		white-space: nowrap;
+	}
+
+	.btn-outline {
+		background: #fff;
+		color: var(--color-text);
+		border-color: var(--color-border);
+	}
+
+	.btn-outline:hover {
+		border-color: var(--color-text);
+		color: var(--color-text);
+	}
+
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border-width: 0;
+	}
+
+	/* ── Responsive ──────────────────────────────────────────────── */
+	@media (max-width: 1000px) {
+		.detail-grid { grid-template-columns: 1fr; }
+		.info-card { position: static; }
+		.event-grid { grid-template-columns: repeat(2, 1fr); }
+	}
+
+	@media (max-width: 680px) {
+		.container { padding: 0 20px; }
+		.hero-container { padding: 40px 20px 60px; }
+		.hero-content { flex-direction: column; gap: 20px; }
+		.hero-date-block { flex-direction: row; width: auto; padding: 12px 20px; gap: 12px; }
+		.hd-day { font-size: 32px; }
+		.event-grid { grid-template-columns: 1fr; }
+	}
+</style>
