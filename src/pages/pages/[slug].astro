@@ -2,6 +2,9 @@
 import { getEmDashEntry, decodeSlug } from "emdash";
 import { PortableText } from "emdash/ui";
 import Base from "../../layouts/Base.astro";
+import FormEmbed from "../../components/FormEmbed.astro";
+import "@emdash-cms/plugin-forms/styles";
+
 
 const slug = decodeSlug(Astro.params.slug);
 
@@ -28,7 +31,7 @@ Astro.cache.set(cacheHint);
 		</header>
 
 		<div class="page-content">
-			<PortableText value={page.data.content} />
+			<PortableText value={page.data.content} components={{ type: { "emdash-form": FormEmbed } }} />
 		</div>
 	</article>
 </Base>

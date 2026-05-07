@@ -10,9 +10,9 @@
 		"src"
 	],
 	"peerDependencies": {
-		"emdash": "^0.9.0"
+		"emdash": "^0.10.0"
 	},
 	"dependencies": {
-		"resend": "^6.12.2"
+		"resend": "^6.12.3"
 	}
 }

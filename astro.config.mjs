@@ -1,10 +1,11 @@
 import node from "@astrojs/node";
 import react from "@astrojs/react";
-import { auditLogPlugin } from "@emdash-cms/plugin-audit-log";
 import { defineConfig, fontProviders, memoryCache } from "astro/config";
 import emdash, { local } from "emdash/astro";
 import { sqlite, postgres } from "emdash/db";
 import { resendPlugin } from "@regio-lek-en-ijssel/plugin-resend";
+import { embedsPlugin } from "@emdash-cms/plugin-embeds";
+import { formsPlugin } from "@emdash-cms/plugin-forms";
 
 const database = process.env.DATABASE_URL
   ? postgres({ connectionString: process.env.DATABASE_URL })
@@ -27,7 +28,7 @@ export default defineConfig({
 				directory: "./uploads",
 				baseUrl: "/_emdash/api/media/file",
 			}),
-			plugins: [resendPlugin()],
+			plugins: [resendPlugin(), embedsPlugin(), formsPlugin()],
 			siteUrl: process.env.BASE_URL,
 			mcp: true,
 		}),
