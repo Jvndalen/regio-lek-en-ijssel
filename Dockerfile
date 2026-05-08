@@ -1,32 +1,32 @@
-FROM node:22-alpine AS builder
-
-# Install pnpm
-RUN corepack enable
+# =========================
+# Builder
+# =========================
+FROM oven/bun:1 AS builder
 
 WORKDIR /app
 
-# Copy only dependency files first (better caching)
-COPY package.json pnpm-lock.yaml ./
-# Copy workspace plugins so pnpm can resolve local packages
-COPY plugins ./plugins
+# Copy dependency files first (better caching)
+COPY package.json bun.lock* ./
 
-ENV PNPM_BUILD_POLICY=allow
+# Copy workspace/local packages if needed
+COPY plugins ./plugins
 
 ENV CI=false
 
-RUN pnpm install --frozen-lockfile --ignore-scripts=false
+# Install dependencies
+RUN bun install --frozen-lockfile
 
 # Copy rest of the app
 COPY . .
 
-# Build
-RUN pnpm build
+# Build app
+RUN bun run build
 
 
+# =========================
+# Runtime
+# =========================
 FROM node:22-alpine
-
-# Install pnpm (needed if you run scripts or rebuild deps)
-# RUN corepack enable && corepack prepare pnpm@11.0.8 --activate
 
 WORKDIR /app
 
@@ -41,4 +41,5 @@ ENV HOST=0.0.0.0
 ENV PORT=4321
 
 EXPOSE 4321
+
 CMD ["node", "./dist/server/entry.mjs"]
