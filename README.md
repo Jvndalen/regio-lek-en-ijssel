@@ -47,7 +47,7 @@ De website biedt:
 |-----------|-------------|
 | Framework | [Astro 6](https://astro.build) (server-rendered) |
 | CMS | [EmDash](https://emdash.dev) |
-| Database | SQLite (lokaal) of PostgreSQL (productie) |
+| Database | SQLite (custom bun driver) |
 | Runtime | [Bun](https://bun.sh) |
 | E-mail | [Resend](https://resend.com) |
 | Container | Docker |
