@@ -1,6 +1,7 @@
 import node from "@astrojs/node";
 import react from "@astrojs/react";
 import { defineConfig, fontProviders, memoryCache } from "astro/config";
+import { fileURLToPath } from "node:url";
 import emdash, { local } from "emdash/astro";
 import { sqlite, postgres } from "emdash/db";
 import { resendPlugin } from "@regio-lek-en-ijssel/plugin-resend";
@@ -55,7 +56,16 @@ export default defineConfig({
 			weights: [400, 500],
 			fallbacks: ["monospace"],
 		},
-	],
+  ],
+  vite: {
+    resolve: {
+       alias: {
+            "emdash/db/sqlite": fileURLToPath(
+             new URL("./src/db/bun-sqlite.ts", import.meta.url),
+           ),
+      },
+    },
+  },
 	devToolbar: { enabled: false },
 	experimental: {
 		cache: {

@@ -1,11 +1,11 @@
 # =========================
 # Builder
 # =========================
-FROM oven/bun:1 AS builder
+FROM oven/bun:1-alpine AS builder
 
 WORKDIR /app
 
-# Copy dependency files first (better caching)
+# Copy dependency files first for caching
 COPY package.json bun.lock* ./
 
 # Copy workspace/local packages if needed
@@ -16,7 +16,7 @@ ENV CI=false
 # Install dependencies
 RUN bun install --frozen-lockfile
 
-# Copy rest of the app
+# Copy rest of app
 COPY . .
 
 # Build app
@@ -26,11 +26,11 @@ RUN bun run build
 # =========================
 # Runtime
 # =========================
-FROM node:22-alpine
+FROM oven/bun:1-alpine
 
 WORKDIR /app
 
-# Copy built app and dependencies
+# Copy build output + deps
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
@@ -42,4 +42,4 @@ ENV PORT=4321
 
 EXPOSE 4321
 
-CMD ["node", "./dist/server/entry.mjs"]
+CMD ["bun", "dist/server/entry.mjs"]
