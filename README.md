@@ -1,64 +1,200 @@
-# EmDash Blog Template
+# Scouting Regio Lek- en IJsselstreek — Website
 
-A clean, minimal blog built with [EmDash](https://github.com/emdash-cms/emdash). Runs on any Node.js server with SQLite and local file storage.
+De officiële website van **Scouting Regio Lek- en IJsselstreek**, gebouwd op [Astro](https://astro.build) met het [EmDash CMS](https://emdash.dev).
 
-![Blog template homepage](https://raw.githubusercontent.com/emdash-cms/emdash/main/assets/templates/blog/latest/homepage-light-desktop.jpg)
+---
 
-## What's Included
+## Voor niet-developers: wat is dit?
 
-- Featured post hero on the homepage
-- Post archive with reading time estimates
-- Category and tag archives
-- Full-text search
-- RSS feed
-- SEO metadata and JSON-LD
-- Dark/light mode
-- Audit log plugin
+Dit is de broncode van de website. Je hoeft hier normaal gesproken niet in te werken — de website heeft een eigen **beheerpaneel** waar je berichten, evenementen en vacatures kunt aanmaken en bewerken.
 
-## Pages
+**Beheerpaneel (live):** de URL van de live site + `/_emdash/admin`
 
-| Page | Route |
-|---|---|
-| Homepage | `/` |
-| All posts | `/posts` |
-| Single post | `/posts/:slug` |
-| Category archive | `/category/:slug` |
-| Tag archive | `/tag/:slug` |
-| Search | `/search` |
-| Static pages | `/pages/:slug` |
-| 404 | fallback |
+Wil je toch iets technisch aanpassen, of weet je niet hoe je bij het beheerpaneel moet komen? Neem dan contact op met de beheerder van de site.
 
-## Screenshots
+---
 
-| | Desktop | Mobile |
-|---|---|---|
-| Light | ![homepage light desktop](https://raw.githubusercontent.com/emdash-cms/emdash/main/assets/templates/blog/latest/homepage-light-desktop.jpg) | ![homepage light mobile](https://raw.githubusercontent.com/emdash-cms/emdash/main/assets/templates/blog/latest/homepage-light-mobile.jpg) |
-| Dark | ![homepage dark desktop](https://raw.githubusercontent.com/emdash-cms/emdash/main/assets/templates/blog/latest/homepage-dark-desktop.jpg) | ![homepage dark mobile](https://raw.githubusercontent.com/emdash-cms/emdash/main/assets/templates/blog/latest/homepage-dark-mobile.jpg) |
+## Inhoudsopgave
 
-## Infrastructure
+- [Wat doet de site?](#wat-doet-de-site)
+- [Technische opbouw](#technische-opbouw)
+- [Lokaal draaien (voor developers)](#lokaal-draaien-voor-developers)
+- [Beheerpaneel](#beheerpaneel)
+- [Contentbeheer](#contentbeheer)
+- [Deployment](#deployment)
+- [Projectstructuur](#projectstructuur)
+- [Plugins](#plugins)
 
-- **Runtime:** Node.js
-- **Database:** SQLite (local file)
-- **Storage:** Local filesystem
-- **Framework:** Astro with `@astrojs/node`
+---
 
-## Getting Started
+## Wat doet de site?
+
+De website biedt:
+
+- **Nieuwsberichten** — posts met afbeeldingen, categorieën en tags
+- **Evenementen** — met datum, locatie en tijdsindicatie
+- **Vacatures** — per groep, met rol, organisatie en inzet
+- **Losse pagina's** — zoals een "Over ons" of contactpagina
+- **Zoekfunctie** — doorzoek alle content via `/search`
+- **RSS-feed** — op `/rss.xml`
+- **Contactformulier** — via e-mail (Resend)
+
+---
+
+## Technische opbouw
+
+| Onderdeel | Technologie |
+|-----------|-------------|
+| Framework | [Astro 6](https://astro.build) (server-rendered) |
+| CMS | [EmDash](https://emdash.dev) |
+| Database | SQLite (lokaal) of PostgreSQL (productie) |
+| Runtime | [Bun](https://bun.sh) |
+| E-mail | [Resend](https://resend.com) |
+| Container | Docker |
+| Font | Nunito (Google Fonts) |
+
+---
+
+## Lokaal draaien (voor developers)
+
+### Vereisten
+
+- [Bun](https://bun.sh) geïnstalleerd (`curl -fsSL https://bun.sh/install | bash`)
+
+### Installeren en starten
 
 ```bash
-pnpm install
-pnpm bootstrap
-pnpm dev
+# 1. Installeer afhankelijkheden
+bun install
+
+# 2. Start de ontwikkelserver (voert ook migraties en seeding uit)
+npx emdash dev
 ```
 
-Open http://localhost:4321 for the site and http://localhost:4321/_emdash/admin for the CMS.
+De site is nu beschikbaar op: **http://localhost:4321**
+Het beheerpaneel op: **http://localhost:4321/_emdash/admin**
 
-## Want Cloudflare Instead?
+### Handige commando's
 
-See the [Cloudflare variant](../blog-cloudflare) for a version that deploys to Cloudflare Workers with D1 and R2.
+```bash
+npx emdash dev                              # Start dev-server
+npx emdash types                            # Genereer TypeScript-types opnieuw
+npx emdash seed seed/seed.json              # Laad demo-content opnieuw
+npx emdash seed seed/seed.json --validate   # Valideer het seed-bestand
+bun run typecheck                           # Controleer TypeScript
+bun run build                               # Bouw de productie-versie
+```
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/emdash-cms/templates/tree/main/blog-cloudflare)
+---
 
-## See Also
+## Beheerpaneel
 
-- [All templates](../)
-- [EmDash documentation](https://github.com/emdash-cms/emdash/tree/main/docs)
+Het beheerpaneel is bereikbaar op `/_emdash/admin`. Hier kun je:
+
+- Berichten, evenementen en vacatures aanmaken, bewerken en verwijderen
+- Afbeeldingen en bestanden uploaden
+- Menu's aanpassen
+- Formulierinzendingen inzien
+
+Op de lokale ontwikkelomgeving is er geen wachtwoord vereist. Op de live omgeving is toegang beveiligd via de omgevingsvariabelen.
+
+---
+
+## Contentbeheer
+
+### Collecties (soorten inhoud)
+
+| Collectie | Velden | URL-patroon |
+|-----------|--------|-------------|
+| **Posts** | Titel, uitgelichte afbeelding, inhoud, samenvatting | `/posts/[slug]` |
+| **Pages** | Titel, inhoud | `/pages/[slug]` |
+| **Evenementen** | Titel, datum, locatie, tijdslabel, inhoud | `/events/[slug]` |
+| **Vacatures** | Rol, organisatie, inzet, beschrijving, inhoud | `/vacatures/[slug]` |
+
+### Taxonomieën (categorisering)
+
+- **Categories** — voor posts
+- **Tags** — voor posts
+- **Groep type** — voor evenementen en vacatures
+- **Vacature type** — voor vacatures
+
+### Menu's
+
+- **Primary Navigation** — het hoofdnavigatiemenu van de site
+
+---
+
+## Deployment
+
+De site draait in een **Docker-container** en is geoptimaliseerd voor zelf-hosting (bijv. via [Coolify](https://coolify.io)).
+
+### Met Docker Compose
+
+```bash
+docker compose up -d
+```
+
+Dit start de container op poort **4321**. Data en uploads worden buiten de container bewaard in:
+
+- `/data/emdash` — de SQLite-database
+- `/data/emdash-uploads` — geüploade afbeeldingen en bestanden
+
+### Omgevingsvariabelen
+
+| Variabele | Beschrijving | Verplicht |
+|-----------|--------------|-----------|
+| `DATABASE_URL` | PostgreSQL-verbindingsstring (als je geen SQLite gebruikt) | Nee |
+| `BASE_URL` | De publieke URL van de site (bijv. `https://regiolekenijssel.nl`) | Ja (productie) |
+| `RESEND_API_KEY` | API-sleutel voor e-mail via Resend | Ja (voor formulieren) |
+
+### Health check
+
+De site heeft een health check-eindpunt op `/health`. Docker gebruikt dit automatisch om te controleren of de applicatie correct opgestart is.
+
+---
+
+## Projectstructuur
+
+```
+regio-lek-en-ijssel/
+├── src/
+│   ├── pages/              # Astro-pagina's (routes van de site)
+│   │   ├── index.astro         # Homepage
+│   │   ├── posts/              # Nieuwsberichten
+│   │   ├── events/             # Evenementen
+│   │   ├── vacatures/          # Vacatures
+│   │   ├── search.astro        # Zoekpagina
+│   │   └── rss.xml.ts          # RSS-feed
+│   ├── layouts/
+│   │   └── Base.astro          # Basisopmaak (menu, zoekbalk, etc.)
+│   ├── components/             # Herbruikbare UI-onderdelen
+│   └── styles/                 # CSS-stijlen
+├── seed/
+│   └── seed.json           # Schemadefinitie + demo-content
+├── plugins/
+│   └── resend/             # Lokale plugin voor e-mail via Resend
+├── data/                   # SQLite-database (niet in git)
+├── uploads/                # Geüploade bestanden (niet in git)
+├── astro.config.mjs        # Astro- en EmDash-configuratie
+├── Dockerfile              # Docker-image definitie
+├── compose.yaml            # Docker Compose configuratie
+└── emdash-env.d.ts         # Gegenereerde TypeScript-types (automatisch)
+```
+
+---
+
+## Plugins
+
+| Plugin | Functie |
+|--------|---------|
+| **resend** (lokaal, `plugins/resend/`) | Verstuurt e-mails via [Resend](https://resend.com) bij formulierinzendingen |
+| **plugin-embeds** | Insluitingen van externe content (bijv. YouTube) in de teksteditor |
+| **plugin-forms** | Contactformulieren met opslag van inzendingen in de database |
+
+---
+
+## Hulp nodig?
+
+- **EmDash documentatie:** https://emdash.dev/docs
+- **Astro documentatie:** https://docs.astro.build
+- **Problemen of vragen:** maak een issue aan in de repository
