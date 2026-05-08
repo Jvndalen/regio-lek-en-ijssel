@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 # =========================
 # Builder
 # =========================
@@ -14,13 +16,16 @@ COPY plugins ./plugins
 ENV CI=false
 
 # Install dependencies
-RUN bun install --frozen-lockfile
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --frozen-lockfile
 
 # Copy rest of app
 COPY . .
 
 # Build app
-RUN bun run build
+RUN --mount=type=cache,target=/app/.astro \
+    --mount=type=cache,target=/app/node_modules/.vite \
+    bun run build
 
 
 # =========================
