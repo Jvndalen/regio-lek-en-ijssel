@@ -96,7 +96,7 @@ Het beheerpaneel is bereikbaar op `/_emdash/admin`. Hier kun je:
 - Menu's aanpassen
 - Formulierinzendingen inzien
 
-Op de lokale ontwikkelomgeving is er geen wachtwoord vereist. Op de live omgeving is toegang beveiligd via de omgevingsvariabelen.
+Authenticatie wordt afgehandled door passkeys
 
 ---
 
