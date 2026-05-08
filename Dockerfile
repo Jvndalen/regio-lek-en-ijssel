@@ -1,7 +1,7 @@
 FROM node:22-alpine AS builder
 
 # Install pnpm
-RUN corepack enable && corepack prepare pnpm@11.0.6 --activate
+RUN corepack enable
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ COPY package.json pnpm-lock.yaml ./
 # Copy workspace plugins so pnpm can resolve local packages
 COPY plugins ./plugins
 
-RUN pnpm config set ignore-scripts false
+ENV PNPM_BUILD_POLICY=allow
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
