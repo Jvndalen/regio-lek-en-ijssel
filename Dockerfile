@@ -12,8 +12,9 @@ COPY plugins ./plugins
 
 ENV PNPM_BUILD_POLICY=allow
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+ENV CI=false
+
+RUN pnpm install --frozen-lockfile --ignore-scripts=false
 
 # Copy rest of the app
 COPY . .
