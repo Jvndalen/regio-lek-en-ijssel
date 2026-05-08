@@ -10,6 +10,8 @@ COPY package.json pnpm-lock.yaml ./
 # Copy workspace plugins so pnpm can resolve local packages
 COPY plugins ./plugins
 
+RUN pnpm config set ignore-scripts false
+
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
