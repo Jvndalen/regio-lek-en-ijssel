@@ -21,7 +21,7 @@
     "@astrojs/react": "5.0.4",
     "@emdash-cms/plugin-embeds": "^0.1.10",
     "@emdash-cms/plugin-forms": "^0.2.1",
-    "@regio-lek-en-ijssel/plugin-resend": "file:plugins\\resend",
+    "@regio-lek-en-ijssel/plugin-resend": "file:plugins/resend",
     "astro": "6.3.1",
     "better-sqlite3": "^12.9.0",
     "emdash": "^0.10.0",
