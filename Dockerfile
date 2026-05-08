@@ -1,7 +1,7 @@
 FROM node:22-alpine AS builder
 
 # Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@11.0.8 --activate
 
 WORKDIR /app
 
@@ -23,7 +23,7 @@ RUN pnpm build
 FROM node:22-alpine
 
 # Install pnpm (needed if you run scripts or rebuild deps)
-# RUN corepack enable && corepack prepare pnpm@latest --activate
+# RUN corepack enable && corepack prepare pnpm@11.0.8 --activate
 
 WORKDIR /app
 

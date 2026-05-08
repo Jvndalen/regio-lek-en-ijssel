@@ -3,6 +3,7 @@
   "version": "0.0.3",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@11.0.8",
   "emdash": {
     "label": "Blog",
     "seed": "seed/seed.json"
@@ -35,8 +36,7 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "better-sqlite3",
-      "esbuild",
-      "sharp"
+      "esbuild"
     ]
   }
 }
