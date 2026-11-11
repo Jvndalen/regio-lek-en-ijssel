@@ -6,7 +6,7 @@ export function resendPlugin(): PluginDescriptor {
 		version: "0.1.0",
 		format: "standard",
 		entrypoint: "@regio-lek-en-ijssel/plugin-resend/sandbox",
-		capabilities: ["hooks.email-transport:register", "network:fetch"],
+		capabilities: ["hooks.email-transport:register", "network:request"],
         allowedHosts: ["api.resend.com"],
         adminPages: [{ path: "/settings", label: "Resend", icon: "email" }],
 	};
