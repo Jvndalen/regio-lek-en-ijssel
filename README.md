@@ -68,7 +68,7 @@ De website biedt:
 bun install
 
 # 2. Start de ontwikkelserver (voert ook migraties en seeding uit)
-npx emdash dev
+bun run dev
 ```
 
 De site is nu beschikbaar op: **http://localhost:4321**
@@ -77,7 +77,7 @@ Het beheerpaneel op: **http://localhost:4321/_emdash/admin**
 ### Handige commando's
 
 ```bash
-npx emdash dev                              # Start dev-server
+bun run dev                                 # Start dev-server
 npx emdash types                            # Genereer TypeScript-types opnieuw
 npx emdash seed seed/seed.json              # Laad demo-content opnieuw
 npx emdash seed seed/seed.json --validate   # Valideer het seed-bestand

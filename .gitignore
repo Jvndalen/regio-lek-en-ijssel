@@ -9,3 +9,6 @@ data.db
 .env
 .env.*
 !.env.example
+
+# EmDash upgrade work order and generated migration manifest
+.emdash/

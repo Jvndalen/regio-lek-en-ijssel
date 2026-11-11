@@ -1,4 +1,4 @@
-import { definePlugin, type PluginContext } from "emdash";
+import type { PluginContext, SandboxedPlugin } from "emdash/plugin";
 import { Resend } from 'resend';
 
 interface EmailMessage {
@@ -143,7 +143,7 @@ async function saveSettings(ctx: PluginContext, values: Record<string, unknown>)
   }
 }
 
-export default definePlugin({
+const plugin = {
   hooks: {
     "email:deliver": {
       exclusive: true,
@@ -232,4 +232,6 @@ export default definePlugin({
       },
     },
   },
-});
+} satisfies SandboxedPlugin;
+
+export default plugin;
